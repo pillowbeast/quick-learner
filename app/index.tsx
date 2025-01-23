@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
+import { ActivityIndicator, MD2Colors } from 'react-native-paper';
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -17,27 +18,30 @@ export default function InitialScreen() {
       console.log("Has Visited?", previouslyVisited);
       console.log("Is Logged In?", isLoggedIn);
 
-      if (!previouslyVisited) {
-        console.log("Redirecting to Landing");
-        router.replace("/auth/landing");
-      } else if (!isLoggedIn) {
-        console.log("Redirecting to Login");
-        router.replace("/auth/login");
-      } else {
-        console.log("Redirecting to Home");
-        router.replace("/home");
-      }
+      setTimeout(() => {
+        if (!previouslyVisited) {
+          console.log("Redirecting to Landing");
+          router.replace("/auth/landing");
+        } else if (!isLoggedIn) {
+          console.log("Redirecting to Login");
+          router.replace("/auth/login");
+        } else {
+          console.log("Redirecting to Home");
+          router.replace("/home");
+        }
 
-      setChecking(false); // Stops loading
+        setChecking(false); // Stops loading
+      }, 1000); // Wait for 1 second
     };
 
     checkNavigation();
+    
   }, []);
 
   if (checking) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={MD2Colors.pinkA200} />
       </View>
     );
   }

@@ -1,8 +1,11 @@
 import React from 'react';
 import { useState } from 'react';
-import { View, Text, TextInput, Button } from 'react-native';
+import { View, Text } from 'react-native';
+import { Button, TextInput } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import AppHeader from '@/components/AppHeader';
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -18,14 +21,17 @@ export default function Login() {
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <AppHeader title="QuickLearner" subtitle='Welcome to' />
       <Text>Login</Text>
       <TextInput
         placeholder="Enter Username"
         value={username}
         onChangeText={setUsername}
-        style={{ borderWidth: 1, padding: 10, width: 200, marginBottom: 20 }}
+        style={{ borderWidth: 1, width: 200, marginBottom: 20 }}
       />
-      <Button title="Login" onPress={handleLogin} />
+      <Button mode="contained" onPress={handleLogin}>
+        Login
+      </Button>
     </View>
   );
 }
