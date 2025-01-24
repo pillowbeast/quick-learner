@@ -20,8 +20,8 @@ export default function InitialScreen() {
 
       setTimeout(() => {
         if (!previouslyVisited) {
-          console.log("Redirecting to Landing");
-          router.replace("/auth/landing");
+          console.log("Redirecting to Onboarding");
+          router.replace("/auth/onboarding");
         } else if (!isLoggedIn) {
           console.log("Redirecting to Login");
           router.replace("/auth/login");

@@ -1,15 +1,19 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { Button } from 'react-native-paper';
 import { Link, Stack } from 'expo-router';
+import { useNavigationHelper } from '@/hooks/useNavigation';
 
 export default function NotFoundScreen() {
+  const { goHomeReplace } = useNavigationHelper();
+
   return (
     <>
       <Stack.Screen options={{ title: 'Oops! Not Found' }} />
       <View style={styles.container}>
-        <Link href="/" style={styles.button}>
-          Go back to Home screen!
-        </Link>
+        <Button mode="contained" onPress={goHomeReplace}>
+          Go to Home
+        </Button>
       </View>
     </>
   );

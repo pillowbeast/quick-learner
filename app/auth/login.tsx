@@ -32,6 +32,15 @@ export default function Login() {
       <Button mode="contained" onPress={handleLogin}>
         Login
       </Button>
+      <Button mode="contained" onPress={handleLogin}>
+        SignUp
+      </Button>
+      <Button mode="contained" onPress={handleLogin}>
+        Continue with Google
+      </Button>
+      <Button mode="contained" onPress={handleLogin}>
+        Continue with Facebook
+      </Button>
     </View>
   );
 }
