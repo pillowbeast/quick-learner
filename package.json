@@ -20,6 +20,7 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@shopify/restyle": "^2.4.4",
+    "@sqlite.org/sqlite-wasm": "^3.48.0-build3",
     "expo": "~52.0.27",
     "expo-blur": "~14.0.2",
     "expo-constants": "~17.0.4",
@@ -30,10 +31,12 @@
     "expo-linking": "~7.0.4",
     "expo-router": "~4.0.17",
     "expo-splash-screen": "^0.29.21",
+    "expo-sqlite": "~15.0.6",
     "expo-status-bar": "~2.0.1",
     "expo-symbols": "~0.2.1",
     "expo-system-ui": "~4.0.7",
     "expo-web-browser": "~14.0.2",
+    "localforage": "^1.10.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.6",
@@ -48,7 +51,9 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
     "tailwind-react-native-classnames": "^1.5.1",
-    "twrnc": "^4.6.0"
+    "twrnc": "^4.6.0",
+    "wa-sqlite": "^1.0.0",
+    "undefined": "expo-sqlite/next"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

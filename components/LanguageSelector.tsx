@@ -1,27 +1,54 @@
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Button } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { Button, TextInput } from 'react-native-paper';
+import { useNavigationHelper } from '@/hooks/useNavigation';
+import { addLanguage, getLanguages } from '@/hooks/useDatabase';
+import Flag from '@/components/Flag';
 
-export default function LanguageSelector({ country_lists }: { country_lists: string[] }) {
-  const router = useRouter();
+export default function LanguageSelector() {
+  const [language, setLanguage] = useState("");
+  const [iso, setIso] = useState("");
+  const [languages, setLanguages] = useState<{ id: number; name: string; iso: string }[]>([]);
+  const { goToLanguage } = useNavigationHelper();
 
-  function movetoLanguage() {
-    router.push("/language");
-  }
+  useEffect(() => {
+    let isMounted = true; // Flag to track if the component is still mounted
+
+    const fetchLanguages = async () => {
+      const langs = await getLanguages();
+      if (isMounted) {
+        setLanguages(langs);
+      }
+    };
+
+    fetchLanguages();
+
+    return () => {
+      isMounted = false; // Cleanup function to prevent state updates
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
-      {country_lists.map((country, index) => (
-        <Button key={index} style={styles.button} mode="contained" onPress={movetoLanguage}>
-          {country}
+      {languages.map(({id, name, iso}) => (
+        <Button key={id} style={styles.button} mode="contained" onPress={() => goToLanguage(iso, name)}>
+          <Flag iso={iso}/>
         </Button>
       ))}
-      <Button style={styles.button} mode="contained" onPress={movetoLanguage}>
-        <Text style={styles.text}>Add Language</Text>
+      <TextInput placeholder="Enter language" value={language} onChangeText={setLanguage} />
+      <TextInput placeholder="ISO Code" value={iso} onChangeText={setIso} />
+      <Button 
+        style={styles.button} 
+        mode="contained" 
+        onPress={
+          async () => { 
+            await addLanguage(language, iso);
+            const updatedLanguages = await getLanguages();
+            setLanguages(updatedLanguages);
+        }}
+      >
+        Add Language
       </Button>
-      <Pressable style={styles.button} onPress={movetoLanguage}>
-        <Text style={styles.text}>Press me</Text>
-      </Pressable>
     </View>
   );
 }

@@ -14,7 +14,7 @@ export default function Home() {
       <TopBar />
       <AppHeader title="QuickLearner" subtitle="" />
       <BigCircle backgroundColor="red" />
-      <LanguageSelector country_lists={["English", "Spanish", "German"]} />
+      <LanguageSelector />
       <BottomBar />
     </View>
   );

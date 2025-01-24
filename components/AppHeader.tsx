@@ -7,7 +7,7 @@ type Props = {
   subtitle?: string;
 };
 
-const AppHeader = ({ title = "Quick Learner!", subtitle = "Welcome to" }: Props) => {
+const AppHeader = ({ title = "Quick Learner!", subtitle = "" }: Props) => {
   return (
     <View style={styles.container}>
       <Text style={{ fontSize: 24 }}>

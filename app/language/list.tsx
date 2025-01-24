@@ -5,10 +5,10 @@ import { useNavigationHelper } from "@/hooks/useNavigation";
 import TopBar from "@/components/TopBar";
 import BottomBar from '@/components/BottomBar';
 import Category from '@/components/Category';
-import List from '@/components/List';
 
 export default function ListPage() {
   const { goToStudy } = useNavigationHelper();
+  const { goToAddWord } = useNavigationHelper();
 
   return (
     <View style={styles.container}>
@@ -18,8 +18,7 @@ export default function ListPage() {
         <IconButton icon="pencil" mode="contained" onPress={() => {console.log('Edit word pressed!')}}/>
         <IconButton icon="plus" mode="contained" onPress={() => {console.log('Add new word pressed!')}}/>
       </View>
-      <List></List>
-      <FAB icon="plus" onPress={() => {console.log('Add pressed!')}} style={styles.fab_add}/>
+      <FAB icon="plus" onPress={goToAddWord} style={styles.fab_add}/>
       <FAB icon="play" onPress={goToStudy} style={styles.fab_play}/>
       <BottomBar />
     </View>

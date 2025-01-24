@@ -5,16 +5,13 @@ import { useNavigationHelper } from "@/hooks/useNavigation";
 import TopBar from "@/components/TopBar";
 import BottomBar from '@/components/BottomBar';
 import Category from '@/components/Category';
-import List from '@/components/List';
 
 export default function StudyPage() {
-  const { goToWrite } = useNavigationHelper();
   const { goToMemorize } = useNavigationHelper();
 
   return (
     <View style={styles.container}>
       <TopBar />
-      <Button onPress={goToWrite}>Write</Button>
       <Button onPress={goToMemorize}>Memorize</Button>
       <BottomBar />
     </View>
