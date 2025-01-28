@@ -32,14 +32,14 @@ export async function setupDatabase() {
         );
         CREATE TABLE IF NOT EXISTS lists (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        languageId INTEGER NOT NULL,
+        language_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         FOREIGN KEY(language_id) REFERENCES languages(id) ON DELETE CASCADE
         );
         CREATE TABLE IF NOT EXISTS words (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        languageId INTEGER NOT NULL,
-        listId INTEGER,
+        language_id INTEGER NOT NULL,
+        list_id INTEGER,
         term TEXT NOT NULL,
         translation TEXT NOT NULL,
         FOREIGN KEY(language_id) REFERENCES languages(id) ON DELETE CASCADE
@@ -66,19 +66,27 @@ export async function addLanguage(name: string, iso: string) {
             console.warn(`Language ${name} or ISO ${iso} already exists.`);
             return null
         }
-        const newLanguages = [...existing, { id: Date.now(), name, iso }];
+        const lang_id = Date.now();
+        const newLanguages = [...existing, { id: lang_id, name, iso }];
         await localforage.setItem("languages", newLanguages);
+        addDefaultList(name, iso, lang_id);
         return newLanguages.length;
     }
 
     const db = getDatabase();
     try {
         const result = await db.runAsync("INSERT INTO languages (name, iso) VALUES (?, ?)", [name, iso]);
+        addDefaultList(name, iso, result.lastInsertRowId);
         return result.lastInsertRowId;
     } catch (error) {
         console.error("Error adding language:", error);
         return null;
     }
+}
+
+export async function addDefaultList(langName: string, iso: string, languageId: number) {
+    addList("My Vocabulary", languageId, "en");
+    console.log(`Added default list for ${langName} (${iso})`);
 }
 
 // 🔹 Function to Get Languages (Web: IndexedDB, Mobile: SQLite)
@@ -97,18 +105,18 @@ export async function getLanguages() {
 }
 
 // 🔹 Function to Add List (Web: IndexedDB, Mobile: SQLite
-export async function addList(name: string, languageId: number): Promise<number | null> {
+export async function addList(name: string, languageId: number, iso: string): Promise<{ language_id: number; iso: string; id: number; name: string } | null> {
     if (Platform.OS === "web") {
-        const existing: { id: number; name: string; language_id: number }[] = (await localforage.getItem(`lists_${languageId}`)) || [];
+        const existing: { id: number; name: string; language_id: number; iso: string }[] = (await localforage.getItem(`lists_${languageId}`)) || [];
         const isDuplicate = existing.some((list) => list.name === name);
 
         if (isDuplicate) {
             console.warn(`List ${name} already exists for language!`);
             return null;
         }
-        const newList = [...existing, { id: Date.now(), name, language_id: languageId }];
+        const newList = [...existing, { id: Date.now(), name, language_id: languageId, iso: iso}];
         await localforage.setItem(`lists_${languageId}`, newList);
-        return newList.length;
+        return newList[newList.length - 1];
     }
 
     const db = getDatabase();
@@ -122,14 +130,14 @@ export async function addList(name: string, languageId: number): Promise<number 
 }
 
 // 🔹 Function to Get Lists (Web: IndexedDB, Mobile: SQLite
-export async function getLists(languageId: number): Promise<{ id: number; name: string }[]> {
+export async function getLists(languageId: number): Promise<{ iso: string; id: number; name: string }[]> {
     if (Platform.OS === "web") {
         return (await localforage.getItem(`lists_${languageId}`)) || [];
     }
 
     const db = getDatabase();
     try {
-        return await db.getAllAsync("SELECT id, name FROM lists WHERE language_id = ?", [languageId]);
+        return await db.getAllAsync("SELECT language_id, id, name FROM lists WHERE language_id = ?", [languageId]);
     } catch (error) {
         console.error("Error fetching lists:", error);
         return [];
