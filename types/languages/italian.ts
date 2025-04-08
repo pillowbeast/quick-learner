@@ -44,7 +44,19 @@ const italianWordTypes: WordTypeConfig[] = [
                     'loro': 'loro'
                 }
             },
-            { name: 'participio passato', type: 'text', isRequired: false }
+            { 
+                name: 'participio passato', 
+                type: 'conjugation', 
+                isRequired: false,
+                persons: {
+                    'io': 'io',
+                    'tu': 'tu',
+                    'lui/lei': 'lui/lei',
+                    'noi': 'noi',
+                    'voi': 'voi',
+                    'loro': 'loro'
+                }
+            }
         ]
     },
     {
@@ -96,11 +108,50 @@ const italianSettings = {
     }
 };
 
+export const initialItalianWords = [
+    // Basic Greetings
+    { word: "Hello", translation: "Ciao", type: "noun" as const, example: "Ciao, come stai?" },
+    { word: "Goodbye", translation: "Arrivederci", type: "noun" as const, example: "Arrivederci, a domani!" },
+    { word: "Please", translation: "Per favore", type: "adverb" as const, example: "Per favore, aiutami" },
+    { word: "Thank you", translation: "Grazie", type: "noun" as const, example: "Grazie per il tuo aiuto" },
+    
+    // Common Verbs
+    { word: "to be", translation: "essere", type: "verb" as const, example: "Io sono felice" },
+    { word: "to have", translation: "avere", type: "verb" as const, example: "Io ho un libro" },
+    { word: "to go", translation: "andare", type: "verb" as const, example: "Io vado a scuola" },
+    { word: "to do", translation: "fare", type: "verb" as const, example: "Io faccio i compiti" },
+    
+    // Common Nouns
+    { word: "book", translation: "libro", type: "noun" as const, example: "Io leggo un libro" },
+    { word: "water", translation: "acqua", type: "noun" as const, example: "Io bevo acqua" },
+    { word: "food", translation: "cibo", type: "noun" as const, example: "Mi piace questo cibo" },
+    { word: "house", translation: "casa", type: "noun" as const, example: "Questa è la mia casa" },
+    
+    // Common Adjectives
+    { word: "good", translation: "buono", type: "adjective" as const, example: "Questo è buono" },
+    { word: "bad", translation: "cattivo", type: "adjective" as const, example: "Questo è cattivo" },
+    { word: "big", translation: "grande", type: "adjective" as const, example: "Questo è grande" },
+    { word: "small", translation: "piccolo", type: "adjective" as const, example: "Questo è piccolo" },
+    
+    // Common Adverbs
+    { word: "very", translation: "molto", type: "adverb" as const, example: "molto buono" },
+    { word: "not", translation: "non", type: "adverb" as const, example: "non male" },
+    { word: "always", translation: "sempre", type: "adverb" as const, example: "Io mangio sempre la colazione" },
+    { word: "never", translation: "mai", type: "adverb" as const, example: "Io non mangio mai carne" },
+    
+    // Common Pronouns
+    { word: "I", translation: "io", type: "other" as const, example: "Io sono qui" },
+    { word: "you", translation: "tu", type: "other" as const, example: "Tu sei gentile" },
+    { word: "he", translation: "lui", type: "other" as const, example: "Lui è alto" },
+    { word: "she", translation: "lei", type: "other" as const, example: "Lei è intelligente" }
+];
+
 export const italianConfig: LanguageConfig = {
     ...createBaseConfig('it', 'Italian'),
     wordTypes: italianWordTypes,
     settings: {
         ...createBaseConfig('it', 'Italian').settings,
         ...italianSettings
-    }
+    },
+    initialWords: initialItalianWords
 }; 

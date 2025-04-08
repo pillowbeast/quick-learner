@@ -7,7 +7,19 @@ import { useDatabase } from '@/hooks/useDatabase.tsx';
 import { languageConfigs } from '@/types/languages';
 import { Language } from '@/hooks/useNavigationContext';
 import Flag from '@/components/Flag';
+import { WordType } from '@/types/word';
+import { List } from '@/hooks/database/types';
 
+interface InitialWord {
+    word: string;
+    translation: string;
+    type: WordType;
+    example?: string;
+}
+
+interface LanguageConfigWithInitialWords {
+    initialWords?: InitialWord[];
+}
 
 export default function AddLanguagePage() {
     const theme = useTheme();
@@ -38,10 +50,35 @@ export default function AddLanguagePage() {
     const handleAddLanguage = async (iso: string, name: string) => {
         setIsAdding(iso);
         try {
+            // Add the language
             const result = await database.addLanguage(iso, name);
-            if (result) {
-                goHomeReplace();
+            if (!result) {
+                throw new Error('Failed to add language');
             }
+
+            // Create a standard list
+            const list = await database.addList(result.uuid, 'Default List', 'A collection of common words to get started');
+            
+            // Get initial words from the language config
+            const languageConfig = languageConfigs[iso] as LanguageConfigWithInitialWords;
+            console.log('Language config:', languageConfig);
+            const initialWords = languageConfig?.initialWords || [];
+            console.log('Initial words:', initialWords);
+
+            if (initialWords.length > 0) {
+                // Add each word to the database
+                for (const word of initialWords) {
+                    await database.addWord(
+                        list.uuid,
+                        word.word,
+                        word.translation,
+                        word.type,
+                        word.example
+                    );
+                }
+            }
+
+            goHomeReplace();
         } catch (error) {
             console.error('Error adding language:', error);
         } finally {
@@ -54,7 +91,6 @@ export default function AddLanguagePage() {
         iso,
         name: config.name
     }));
-    console.log('Available languages:', availableLanguages);
 
     if (database.isLoading || isLoading) {
         return (

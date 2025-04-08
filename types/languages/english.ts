@@ -1,4 +1,4 @@
-import { LanguageConfig, WordTypeConfig, createBaseConfig } from "@/types/languageConfig";
+import { LanguageConfig, WordTypeConfig, createBaseConfig, InitialWord } from "@/types/languageConfig";
 
 const englishWordTypes: WordTypeConfig[] = [
     {
@@ -8,7 +8,7 @@ const englishWordTypes: WordTypeConfig[] = [
         description: 'A person, place, thing, or idea',
         properties: [
             { name: 'article', type: 'select', isRequired: false, options: ['the', 'a', 'an'] },
-            { name: 'plural', type: 'text', isRequired: true }
+            { name: 'plural', type: 'text', isRequired: false }
         ]
     },
     {
@@ -64,8 +64,8 @@ const englishWordTypes: WordTypeConfig[] = [
         text: 'Adjective',
         description: 'Describes a noun',
         properties: [
-            { name: 'comparative', type: 'text', isRequired: true },
-            { name: 'superlative', type: 'text', isRequired: true }
+            { name: 'comparative', type: 'text', isRequired: false },
+            { name: 'superlative', type: 'text', isRequired: false }
         ]
     },
     {
@@ -107,11 +107,16 @@ const englishSettings = {
     }
 };
 
+const initialEnglishWords: InitialWord[] = [
+    { word: 'test', translation: 'test', type: 'noun', example: 'Testing Standard List.' },
+];
+
 export const englishConfig: LanguageConfig = {
     ...createBaseConfig('en', 'English'),
     wordTypes: englishWordTypes,
     settings: {
         ...createBaseConfig('en', 'English').settings,
         ...englishSettings
-    }
+    },
+    initialWords: initialEnglishWords
 }; 

@@ -18,10 +18,17 @@ export interface WordTypeConfig {
     properties: {
         name: string;
         type: PropertyType;
-        isRequired: boolean;
-        options?: string[]; // For select type
-        persons?: { [key: string]: string }; // For conjugation type
+        isRequired?: boolean;
+        options?: string[];
+        persons?: Record<string, string>;
     }[];
+}
+
+export interface InitialWord {
+    word: string;
+    translation: string;
+    type: WordType;
+    example?: string;
 }
 
 export interface LanguageConfig {
@@ -29,6 +36,7 @@ export interface LanguageConfig {
     name: string;
     wordTypes: WordTypeConfig[];
     settings: LanguageSettings;
+    initialWords?: InitialWord[];
 }
 
 // Base language configuration

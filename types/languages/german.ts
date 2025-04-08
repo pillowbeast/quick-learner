@@ -1,4 +1,4 @@
-import { LanguageConfig, WordTypeConfig, createBaseConfig } from "@/types/languageConfig";
+import { LanguageConfig, WordTypeConfig, createBaseConfig, InitialWord } from "@/types/languageConfig";
 
 const germanWordTypes: WordTypeConfig[] = [
     {
@@ -95,11 +95,16 @@ const germanSettings = {
     }
 };
 
+const initialGermanWords: InitialWord[] = [
+    { word: 'test', translation: 'test', type: 'noun', example: 'Testing Standard List.' },
+];
+
 export const germanConfig: LanguageConfig = {
     ...createBaseConfig('de', 'German'),
     wordTypes: germanWordTypes,
     settings: {
         ...createBaseConfig('de', 'German').settings,
         ...germanSettings
-    }
+    },
+    initialWords: initialGermanWords
 }; 

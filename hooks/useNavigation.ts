@@ -6,6 +6,9 @@ export function useNavigationHelper() {
     const { state, setCurrentLanguage, setCurrentList } = useNavigationContext();
 
     return {
+        goOnboarding: () => {
+            router.replace("/onboarding");
+        },
         goHomePush: () => {
             router.push("/home");
         },
