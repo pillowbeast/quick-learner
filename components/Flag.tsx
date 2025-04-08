@@ -2,21 +2,31 @@ import React from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import CountryFlag from "react-native-country-flag";
 
+// Map language codes to country codes
+const languageToCountryCode: { [key: string]: string } = {
+    'en': 'gb', // English -> United Kingdom
+    'es': 'es', // Spanish -> Spain
+    'fr': 'fr', // French -> France
+    'de': 'de', // German -> Germany
+    'it': 'it', // Italian -> Italy
+    'pt': 'pt', // Portuguese -> Portugal
+};
 
 export default function Flag({ iso }: { iso: string }) {
-  return (
-    <View style={styles.container}>
-      <CountryFlag isoCode={iso} size={25} />
-    </View>
-  );
+    const countryCode = languageToCountryCode[iso.toLowerCase()] || iso.toLowerCase();
+    return (
+        <View style={styles.container}>
+            <CountryFlag isoCode={countryCode} size={25} />
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    justifyContent: "center",
-    alignItems: "center",
-    height: 50,
-    width: 100,
-    backgroundColor: "#fff",
-  },
+    container: {
+        justifyContent: "center",
+        alignItems: "center",
+        height: 50,
+        width: 100,
+        backgroundColor: "#fff",
+    },
 });
