@@ -13,8 +13,8 @@ export interface LanguageSettings {
 export interface WordTypeConfig {
     type: WordType;
     icon: string;
-    text: string;
-    description: string;
+    text?: string;
+    description?: string;
     properties: {
         name: string;
         type: PropertyType;

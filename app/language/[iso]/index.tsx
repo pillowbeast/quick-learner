@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, View, StyleSheet } from 'react-native';
-import { Text, Surface, TextInput, Button, ActivityIndicator } from 'react-native-paper';
+import { ScrollView, View, StyleSheet, Alert } from 'react-native';
+import { Text, Surface, TextInput, Button, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useTheme } from 'react-native-paper';
 
 import { useDatabase } from '@/hooks/useDatabase';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import Flag from '@/components/Flag';
-
+import i18n from '@/i18n';
 
 export default function LanguagePage() {
   const theme = useTheme();
@@ -23,7 +23,7 @@ export default function LanguagePage() {
       if (!state.currentLanguage?.uuid) return;
       try {
         setIsLoading(true);
-        const lists = await database.getListsByLanguage(state.currentLanguage.uuid);
+        const lists = await database.getListsByLanguage(state.currentLanguage.iso);
         console.log('lists', lists);
         setCurrentLanguage({ ...state.currentLanguage, lists });
         console.log('state.currentLanguage', state.currentLanguage);
@@ -41,7 +41,7 @@ export default function LanguagePage() {
     
     try {
       setIsLoading(true);
-      const result = await database.addList(state.currentLanguage.uuid, newListName);
+      const result = await database.addList(state.currentLanguage.iso, newListName);
       if (result && state.currentLanguage.lists) {
         setCurrentLanguage({
           ...state.currentLanguage,
@@ -62,6 +62,45 @@ export default function LanguagePage() {
     goToList(state.currentLanguage!, list);
   };
 
+  const handleDeleteList = async (list: typeof state.currentList) => {
+    if (!list) return;
+    
+    Alert.alert(
+      i18n.t('delete_list_confirm_title'),
+      i18n.t('delete_list_confirm_message'),
+      [
+        {
+          text: i18n.t('cancel'),
+          style: 'cancel'
+        },
+        {
+          text: i18n.t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoading(true);
+              await database.deleteList(list.uuid);
+              if (state.currentLanguage?.lists) {
+                setCurrentLanguage({
+                  ...state.currentLanguage,
+                  lists: state.currentLanguage.lists.filter(l => l.uuid !== list.uuid)
+                });
+              }
+            } catch (error) {
+              console.error('Error deleting list:', error);
+              Alert.alert(
+                i18n.t('delete_error_title'),
+                i18n.t('delete_error_message')
+              );
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   if (!state.currentLanguage) {
     return null;
   }
@@ -70,7 +109,7 @@ export default function LanguagePage() {
     return (
       <View style={[styles.container, styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>Loading lists...</Text>
+        <Text style={styles.loadingText}>{i18n.t('loading_lists')}</Text>
       </View>
     );
   }
@@ -91,12 +130,21 @@ export default function LanguagePage() {
           >
             <View style={styles.cardContent}>
               <Text style={styles.listName}>{list.name}</Text>
-              <Button
-                mode="contained"
-                onPress={() => handleListSelect(list)}
-              >
-                View
-              </Button>
+              <View style={styles.cardActions}>
+                <Button
+                  mode="contained"
+                  onPress={() => handleListSelect(list)}
+                  style={styles.viewButton}
+                >
+                  {i18n.t('view')}
+                </Button>
+                <IconButton
+                  icon="delete"
+                  size={24}
+                  onPress={() => handleDeleteList(list)}
+                  style={styles.deleteButton}
+                />
+              </View>
             </View>
           </Surface>
         ))}
@@ -104,7 +152,7 @@ export default function LanguagePage() {
 
       <Surface style={styles.footer} elevation={2}>
         <TextInput
-          placeholder="Enter list name"
+          placeholder={i18n.t('enter_list_name')}
           value={newListName}
           onChangeText={setNewListName}
           style={styles.input}
@@ -115,7 +163,7 @@ export default function LanguagePage() {
           onPress={handleAddList}
           disabled={!newListName.trim()}
         >
-          Add List
+          {i18n.t('add_list')}
         </Button>
       </Surface>
     </View>
@@ -167,5 +215,15 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewButton: {
+    marginRight: 8,
+  },
+  deleteButton: {
+    margin: 0,
   },
 });

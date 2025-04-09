@@ -8,7 +8,7 @@ import { languageConfigs } from '@/types/languages';
 import { Language } from '@/hooks/useNavigationContext';
 import Flag from '@/components/Flag';
 import { WordType } from '@/types/word';
-import { List } from '@/hooks/database/types';
+import i18n from '@/i18n';
 
 interface InitialWord {
     word: string;
@@ -57,7 +57,7 @@ export default function AddLanguagePage() {
             }
 
             // Create a standard list
-            const list = await database.addList(result.uuid, 'Default List', 'A collection of common words to get started');
+            const list = await database.addList(result.iso, i18n.t('default_list'), i18n.t('default_list_description'));
             
             // Get initial words from the language config
             const languageConfig = languageConfigs[iso] as LanguageConfigWithInitialWords;
@@ -96,7 +96,7 @@ export default function AddLanguagePage() {
         return (
             <View style={[styles.container, styles.loadingContainer]}>
                 <ActivityIndicator size="large" />
-                <Text style={styles.loadingText}>Loading languages...</Text>
+                <Text style={styles.loadingText}>{i18n.t('loading_languages')}</Text>
             </View>
         );
     }
@@ -104,7 +104,7 @@ export default function AddLanguagePage() {
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <Surface style={styles.header} elevation={0}>
-                <Text variant="headlineMedium" style={styles.title}>Add New Language</Text>
+                <Text variant="headlineMedium" style={styles.title}>{i18n.t('add_language')}</Text>
             </Surface>
 
             <FlatList
@@ -134,7 +134,7 @@ export default function AddLanguagePage() {
                                 loading={isAdding === language.iso}
                                 disabled={isAdded || isAdding !== null}
                             >
-                                {isAdded ? 'Added' : 'Add'}
+                                {isAdded ? i18n.t('added') : i18n.t('add')}
                             </Button>
                         </Surface>
                     );
@@ -176,10 +176,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
-    },
-    flag: {
-        fontSize: 24,
-        marginRight: 16,
+        gap: 16,
     },
     name: {
         fontSize: 16,

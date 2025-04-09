@@ -4,8 +4,6 @@ const englishWordTypes: WordTypeConfig[] = [
     {
         type: 'noun',
         icon: 'book',
-        text: 'Noun',
-        description: 'A person, place, thing, or idea',
         properties: [
             { name: 'article', type: 'select', isRequired: false, options: ['the', 'a', 'an'] },
             { name: 'plural', type: 'text', isRequired: false }
@@ -14,8 +12,6 @@ const englishWordTypes: WordTypeConfig[] = [
     {
         type: 'verb',
         icon: 'run',
-        text: 'Verb',
-        description: 'An action or state of being',
         properties: [
             { 
                 name: 'presentSimple', 
@@ -61,8 +57,6 @@ const englishWordTypes: WordTypeConfig[] = [
     {
         type: 'adjective',
         icon: 'format-color-fill',
-        text: 'Adjective',
-        description: 'Describes a noun',
         properties: [
             { name: 'comparative', type: 'text', isRequired: false },
             { name: 'superlative', type: 'text', isRequired: false }
@@ -71,8 +65,6 @@ const englishWordTypes: WordTypeConfig[] = [
     {
         type: 'adverb',
         icon: 'format-align-justify',
-        text: 'Adverb',
-        description: 'Describes a verb, adjective, or other adverb',
         properties: [
             { name: 'comparative', type: 'text', isRequired: false },
             { name: 'superlative', type: 'text', isRequired: false }
@@ -81,8 +73,6 @@ const englishWordTypes: WordTypeConfig[] = [
     {
         type: 'phrase',
         icon: 'format-quote-close',
-        text: 'Phrase',
-        description: 'A group of words with a specific meaning',
         properties: [
             { name: 'context', type: 'text', isRequired: false }
         ]
@@ -90,8 +80,6 @@ const englishWordTypes: WordTypeConfig[] = [
     {
         type: 'other',
         icon: 'help-circle',
-        text: 'Other',
-        description: 'Any other type of word or expression',
         properties: [
             { name: 'notes', type: 'text', isRequired: false }
         ]

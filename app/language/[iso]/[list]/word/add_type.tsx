@@ -5,6 +5,7 @@ import { Text, Surface, IconButton } from 'react-native-paper';
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { languageConfigs } from '@/types/languages';
+import i18n from '@/i18n';
 
 export default function AddWordTypePage() {
   const { state } = useNavigationContext();
@@ -19,7 +20,7 @@ export default function AddWordTypePage() {
     <View style={styles.container}>
       <Surface style={styles.header} elevation={1}>
         <Text variant="headlineSmall" style={styles.title}>
-          Select Word Type
+          {i18n.t('select_word_type')}
         </Text>
       </Surface>
 
@@ -38,10 +39,10 @@ export default function AddWordTypePage() {
             />
             <View style={styles.textContainer}>
               <Text variant="titleMedium" style={styles.typeText}>
-                {wordType.text}
+                {i18n.t(wordType.type)}
               </Text>
               <Text variant="bodyMedium" style={styles.description}>
-                {wordType.description}
+                {i18n.t(`${wordType.type}_description`)}
               </Text>
             </View>
           </Surface>

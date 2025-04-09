@@ -10,7 +10,7 @@ interface UseWordSelectionProps {
 
 interface UseWordSelectionReturn {
   currentWord: Word | null;
-  currentIndex: number;
+  remainingWords: number;
   handleSuccess: (success: boolean) => Promise<void>;
   nextWord: () => void;
 }
@@ -41,12 +41,13 @@ function calculateWordScore(word: Word): number {
 }
 
 export function useWordSelection({ words, onWordChange }: UseWordSelectionProps): UseWordSelectionReturn {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Keep track of active words that haven't been answered yet
+  const [activeWords, setActiveWords] = useState<Word[]>([]);
   const database = useDatabase();
 
-  // Sort words by their score and take up to 5 most relevant words
-  const sortedWords = useMemo(() => {
-    if (words.length === 0) return [];
+  // Initialize active words when words array changes
+  useMemo(() => {
+    if (words.length === 0) return;
     
     const scoredWords = words.map(word => ({
       word,
@@ -56,12 +57,14 @@ export function useWordSelection({ words, onWordChange }: UseWordSelectionProps)
     // Sort by score in descending order (higher score = higher priority)
     scoredWords.sort((a, b) => b.score - a.score);
     
-    // Take up to 100 words and shuffle them
-    const topWords = scoredWords.slice(0, 5).map(w => w.word);
-    return topWords.sort(() => Math.random() - 0.5);
+    // Use all words in order of priority
+    const orderedWords = scoredWords.map(w => w.word);
+    
+    setActiveWords(orderedWords);
+    logger.debug(`Initialized ${orderedWords.length} words for practice, sorted by priority`);
   }, [words]);
 
-  const currentWord = sortedWords[currentIndex] || null;
+  const currentWord = activeWords[0] || null;
 
   const updateProficiency = useCallback(async (word: Word, success: boolean) => {
     try {
@@ -94,21 +97,26 @@ export function useWordSelection({ words, onWordChange }: UseWordSelectionProps)
   }, [currentWord, updateProficiency]);
 
   const nextWord = useCallback(() => {
-    const nextIndex = currentIndex + 1;
-    if (nextIndex >= sortedWords.length) {
-      // We've reached the end of the list
-      setCurrentIndex(sortedWords.length);
+    if (activeWords.length <= 1) {
+      // No more words to practice
+      setActiveWords([]);
       return;
     }
-    setCurrentIndex(nextIndex);
-    if (onWordChange && sortedWords[nextIndex]) {
-      onWordChange(sortedWords[nextIndex]);
+
+    // Remove the current word and move to the next one
+    const newActiveWords = activeWords.slice(1);
+    setActiveWords(newActiveWords);
+    
+    if (onWordChange && newActiveWords[0]) {
+      onWordChange(newActiveWords[0]);
     }
-  }, [currentIndex, sortedWords, onWordChange]);
+    
+    logger.debug(`Moving to next word. ${newActiveWords.length} words remaining`);
+  }, [activeWords, onWordChange]);
 
   return {
     currentWord,
-    currentIndex,
+    remainingWords: activeWords.length,
     handleSuccess,
     nextWord,
   };

@@ -3,6 +3,8 @@ import { View, StyleSheet, ScrollView, TouchableWithoutFeedback, Keyboard, Keybo
 import { Text, TextInput, Button, Surface, Chip, List } from 'react-native-paper';
 import { WordType, WordProperties, PropertyType } from '@/types/word';
 import { languageConfigs } from '@/types/languages';
+import { useNavigationContext } from '@/hooks/useNavigationContext';
+import i18n from '@/i18n';
 
 interface WordFormProps {
   type: WordType;
@@ -25,8 +27,10 @@ export default function WordForm({
   initialProperties = {},
   onSubmit,
   onCancel,
-  submitButtonText = 'Add Word'
+  submitButtonText
 }: WordFormProps) {
+  const { state } = useNavigationContext();
+
   const [word, setWord] = useState(initialWord);
   const [translation, setTranslation] = useState(initialTranslation);
   const [example, setExample] = useState(initialExample);
@@ -48,7 +52,7 @@ export default function WordForm({
 
   const handleSubmit = async () => {
     if (!word || !translation) {
-      setError('Word and translation are required');
+      setError(`${i18n.t('word')} and ${i18n.t('translation')} are ${i18n.t('required')}`);
       return;
     }
 
@@ -60,8 +64,8 @@ export default function WordForm({
     }
 
     const requiredProperties = wordTypeConfig.properties
-      .filter((prop: { isRequired: boolean }) => prop.isRequired)
-      .map((prop: { name: string }) => prop.name);
+      .filter((prop) => prop.isRequired === true)
+      .map((prop) => prop.name);
 
     const missingProperties = requiredProperties.filter(field => {
       const property = properties[field];
@@ -71,7 +75,7 @@ export default function WordForm({
     });
 
     if (missingProperties.length > 0) {
-      setError(`Please fill in all required fields: ${missingProperties.join(', ')}`);
+      setError(`${i18n.t('required')}: ${missingProperties.join(', ')}`);
       return;
     }
 
@@ -96,7 +100,7 @@ export default function WordForm({
     );
   };
 
-  const renderField = (property: { name: string; type: PropertyType; options?: string[]; persons?: Record<string, string>; isRequired: boolean }) => {
+  const renderField = (property: { name: string; type: PropertyType; options?: string[]; persons?: Record<string, string>; isRequired?: boolean }) => {
     const currentProperty = properties[property.name];
     const currentValue = currentProperty?.value || '';
     
@@ -104,7 +108,7 @@ export default function WordForm({
       return (
         <TextInput
           key={property.name}
-          label={property.name}
+          label={i18n.t(property.name)}
           value={currentValue as string}
           onChangeText={(text) => handlePropertyChange(property.name, text, property.type)}
           style={styles.input}
@@ -113,7 +117,7 @@ export default function WordForm({
     } else if (property.type === 'select' && property.options) {
       return (
         <View key={property.name} style={styles.fieldContainer}>
-          <Text style={styles.label}>{property.name}</Text>
+          <Text style={styles.label}>{i18n.t(property.name)}</Text>
           <View style={styles.chipContainer}>
             {property.options.map((option) => (
               <Chip
@@ -177,32 +181,25 @@ export default function WordForm({
         >
           <Surface style={styles.header} elevation={1}>
             <Text variant="headlineSmall" style={styles.title}>
-              {initialWord ? 'Edit' : 'Add'} {type?.charAt(0).toUpperCase() + type?.slice(1)}
+              {initialWord ? i18n.t('edit_word') : i18n.t('add_word')}
             </Text>
           </Surface>
 
           <View style={styles.content}>
             <View>
               <TextInput
-                label="Word"
+                label={i18n.t('word')}
                 value={word}
                 onChangeText={setWord}
                 style={styles.input}
               />
               <TextInput
-                label="Translation"
+                label={i18n.t('translation')}
                 value={translation}
                 onChangeText={setTranslation}
                 style={styles.input}
               />
-              <TextInput
-                label="Example (optional)"
-                value={example}
-                onChangeText={setExample}
-                multiline
-                style={styles.input}
-              />
-
+              
               {error && (
                 <Text style={styles.error}>{error}</Text>
               )}
@@ -212,13 +209,24 @@ export default function WordForm({
             <View style={{ height: 3, backgroundColor: 'grey' }} />
             <View style={{ height: 24 }} />
 
+            <Text variant="titleMedium" style={{ marginBottom: 8 }}> {i18n.t('optional')}</Text>
+            
+            <TextInput
+              label={`${i18n.t('example')}`}
+              value={example}
+              onChangeText={setExample}
+              multiline
+              style={styles.input}
+            />
+
+
             {type && config.wordTypes
               .find((wt: { type: WordType }) => wt.type === type)?.properties
               .sort((a, b) => {
                 const typeOrder = { 'text': 0, 'select': 1, 'conjugation': 2 };
                 return typeOrder[a.type] - typeOrder[b.type];
               })
-              .map((property: { name: string; type: PropertyType; options?: string[]; persons?: Record<string, string>; isRequired: boolean }) => renderField(property))
+              .map((property) => renderField(property))
             }
           </View>
         </ScrollView>
@@ -231,7 +239,7 @@ export default function WordForm({
             onPress={onCancel}
             style={[styles.button, styles.cancelButton]}
           >
-            Cancel
+            {i18n.t('cancel')}
           </Button>
         )}
         <Button
@@ -241,7 +249,7 @@ export default function WordForm({
           disabled={isSubmitting}
           style={styles.button}
         >
-          {submitButtonText}
+          {submitButtonText || i18n.t('submit')}
         </Button>
       </View>
     </KeyboardAvoidingView>

@@ -11,8 +11,8 @@ export interface Language {
 }
 
 export interface List {
-    uuid: UUID;
-    languageId: UUID;
+    uuid: string;
+    language_iso: string;
     name: string;
     description?: string;
     created_at: string;

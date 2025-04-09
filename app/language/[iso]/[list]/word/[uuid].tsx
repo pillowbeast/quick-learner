@@ -47,7 +47,7 @@ export default function EditWordPage() {
       
       // Load properties
       const wordProperties = await database.getWordProperties(data.uuid);
-      console.log('word Properties', wordProperties);
+      console.log('Initial word properties:', wordProperties);
       const formattedProperties: WordProperties = {};
       
       for (const prop of wordProperties) {
@@ -67,6 +67,7 @@ export default function EditWordPage() {
         }
       }
       
+      console.log('Formatted properties:', formattedProperties);
       setInitialProperties(formattedProperties);
       setError(null);
     } catch (error) {
@@ -113,6 +114,9 @@ export default function EditWordPage() {
     setError(null);
 
     try {
+      console.log('Submitting properties:', properties);
+      
+      // First update the word itself
       await database.updateWord(
         uuid,
         word,
@@ -121,19 +125,45 @@ export default function EditWordPage() {
         example
       );
 
-      // Update properties
+      // Get existing properties to compare
+      const existingProperties = await database.getWordProperties(uuid);
+      console.log('Existing properties before update:', existingProperties);
+      const existingPropertyNames = new Set(existingProperties.map(p => p.name));
+
+      // Update or add properties
       for (const [name, property] of Object.entries(properties)) {
         const value = typeof property.value === 'object' 
           ? JSON.stringify(property.value)
           : property.value as string;
 
-        try {
+        console.log(`Processing property ${name}:`, {
+          value,
+          type: property.type,
+          exists: existingPropertyNames.has(name)
+        });
+
+        if (existingPropertyNames.has(name)) {
+          // Update existing property
           await database.updateWordProperty(uuid, name, value);
-        } catch (error) {
-          // If update fails, try to add the property
+          console.log(`Updated property ${name}`);
+        } else {
+          // Add new property
           await database.addWordProperty(uuid, name, value, property.type);
+          console.log(`Added new property ${name}`);
         }
       }
+
+      // Remove properties that are no longer present
+      for (const existingProp of existingProperties) {
+        if (!properties[existingProp.name]) {
+          console.log(`Removing property ${existingProp.name}`);
+          await database.deleteWordProperty(uuid, existingProp.name);
+        }
+      }
+
+      // Log final state
+      const finalProperties = await database.getWordProperties(uuid);
+      console.log('Final properties after update:', finalProperties);
 
       setShowSuccess(true);
     } catch (error) {

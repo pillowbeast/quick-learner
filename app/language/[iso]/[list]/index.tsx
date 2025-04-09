@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, Card, FAB, ActivityIndicator, Surface, IconButton } from 'react-native-paper';
+import { View, StyleSheet, FlatList, ScrollView, Share, Platform, Alert } from 'react-native';
+import { Text, Card, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, TextInput } from 'react-native-paper';
 import { useFocusEffect } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useDatabase } from '@/hooks/useDatabase.tsx';
 import { Word } from '@/hooks/database/types';
 import { ListInfoOverlay } from '@/components/ListInfoOverlay';
+import i18n from '@/i18n';
+import { exportList, importList } from '@/hooks/database/list';
 
 const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown: number }) => {
   const getStatusColor = () => {
@@ -51,9 +56,11 @@ const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown
 
 export default function ListPage() {
   const { state } = useNavigationContext();
-  const { goToAddWordType, goToMemorize, goToEditWord } = useNavigationHelper();
+  const { goToAddWordType, goToMemorize, goToEditWord, goBack } = useNavigationHelper();
   const database = useDatabase();
   const [showInfo, setShowInfo] = useState(false);
+  const [selectedWord, setSelectedWord] = useState<Word | null>(null);
+  const [wordDetails, setWordDetails] = useState<JSX.Element | null>(null);
 
   const [words, setWords] = useState<Word[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,6 +92,179 @@ export default function ListPage() {
     }, [loadWords])
   );
 
+  const handleExport = async () => {
+    try {
+      if (!state.currentList?.uuid) {
+        throw new Error('No list selected');
+      }
+
+      console.log('Exporting list:', state.currentList.uuid);
+      const exportedList = await exportList(state.currentList.uuid);
+      console.log('Exported list data:', exportedList);
+      
+      const jsonString = JSON.stringify(exportedList, null, 2);
+      console.log('JSON string:', jsonString);
+      
+      if (Platform.OS === 'web') {
+        console.log('Using web export method');
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${exportedList.name}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        console.log('Using mobile export method');
+        const fileName = `QuickLearner_${exportedList.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+        
+        console.log('Writing to file:', fileUri);
+        await FileSystem.writeAsStringAsync(fileUri, jsonString);
+        console.log('File written successfully');
+        
+        // Check if file exists
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        if (!fileInfo.exists) {
+          throw new Error('Failed to create file');
+        }
+
+        // Use expo-sharing to share the file
+        if (!(await Sharing.isAvailableAsync())) {
+          throw new Error('Sharing is not available on this device');
+        }
+
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/json',
+          dialogTitle: `Share ${fileName}`,
+          UTI: 'public.json'
+        });
+      }
+    } catch (error) {
+      console.error('Error exporting list:', error);
+      // Show error to user
+      Alert.alert(
+        i18n.t('export_error_title'),
+        i18n.t('export_error_message'),
+        [{ text: i18n.t('ok') }]
+      );
+    }
+  };
+
+  const handleImport = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const file = result.assets[0];
+      console.log('Selected file:', file);
+      
+      // Read the file content
+      const fileContent = await FileSystem.readAsStringAsync(file.uri);
+      console.log('File content:', fileContent);
+      
+      try {
+        const importedList = JSON.parse(fileContent);
+        console.log('Parsed list:', importedList);
+        
+        // Import the list
+        const newListId = await importList(importedList);
+        console.log('List imported successfully:', newListId);
+        
+        // Refresh the list
+        loadWords();
+        
+        Alert.alert(
+          i18n.t('import_success_title'),
+          i18n.t('import_success_message'),
+          [{ text: i18n.t('ok') }]
+        );
+      } catch (parseError) {
+        console.error('Error parsing JSON:', parseError);
+        Alert.alert(
+          i18n.t('import_error_title'),
+          i18n.t('import_error_invalid_json'),
+          [{ text: i18n.t('ok') }]
+        );
+      }
+    } catch (error) {
+      console.error('Error importing list:', error);
+      Alert.alert(
+        i18n.t('import_error_title'),
+        i18n.t('import_error_message'),
+        [{ text: i18n.t('ok') }]
+      );
+    }
+  };
+
+  const handleDeleteWord = async (word: Word) => {
+    Alert.alert(
+      i18n.t('delete_word_confirm_title'),
+      i18n.t('delete_word_confirm_message'),
+      [
+        {
+          text: i18n.t('cancel'),
+          style: 'cancel'
+        },
+        {
+          text: i18n.t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await database.deleteWord(word.uuid);
+              // Refresh the word list
+              loadWords();
+            } catch (error) {
+              console.error('Error deleting word:', error);
+              Alert.alert(
+                i18n.t('delete_error_title'),
+                i18n.t('delete_error_message')
+              );
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const renderWordDetails = async (word: Word) => {
+    const properties = await database.getWordProperties(word.uuid);
+    const details = (
+      <View style={styles.wordDetails}>
+        {word.example && (
+          <View style={styles.detailSection}>
+            <Text variant="labelMedium" style={styles.detailLabel}>{i18n.t('example')}:</Text>
+            <Text variant="bodyMedium">{word.example}</Text>
+          </View>
+        )}
+        {properties.map((property) => (
+          <View key={property.name} style={styles.detailSection}>
+            <Text variant="labelMedium" style={styles.detailLabel}>{property.name}:</Text>
+            <Text variant="bodyMedium">{String(property.value)}</Text>
+          </View>
+        ))}
+      </View>
+    );
+    setWordDetails(details);
+  };
+
+  // Add effect to load word details when a word is selected
+  useEffect(() => {
+    if (selectedWord) {
+      renderWordDetails(selectedWord);
+    } else {
+      setWordDetails(null);
+    }
+  }, [selectedWord]);
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -105,18 +285,34 @@ export default function ListPage() {
     <View style={styles.container}>
       <Surface style={styles.header} elevation={1}>
         <View style={styles.headerContent}>
+          <IconButton
+            icon="arrow-left"
+            size={24}
+            onPress={goBack}
+          />
           <Text variant="headlineSmall" style={styles.listName}>
             {state.currentList?.name}
           </Text>
-          <IconButton
-            icon="help-circle"
-            size={24}
-            onPress={() => setShowInfo(true)}
-            style={styles.helpButton}
-          />
+          <View style={styles.headerActions}>
+            <IconButton
+              icon="help-circle"
+              size={24}
+              onPress={() => setShowInfo(true)}
+            />
+            <IconButton
+              icon="export"
+              size={24}
+              onPress={handleExport}
+            />
+            <IconButton
+              icon="import"
+              size={24}
+              onPress={handleImport}
+            />
+          </View>
         </View>
         <Text variant="bodyMedium" style={styles.wordCount}>
-          {words.length} {words.length === 1 ? 'word' : 'words'}
+          {words.length} {words.length === 1 ? i18n.t('word_singular') : i18n.t('word_plural')}
         </Text>
       </Surface>
       <FlatList
@@ -124,26 +320,32 @@ export default function ListPage() {
         data={words}
         keyExtractor={(item) => item.uuid}
         renderItem={({ item }) => (
-          <Card style={styles.card}>
+          <Card 
+            style={styles.card}
+            onPress={() => setSelectedWord(item)}
+          >
             <Card.Content style={styles.cardContent}>
               <View style={styles.cardTextContainer}>
                 <Text variant="titleMedium">{item.translation}</Text>
                 <Text variant="bodyMedium">{item.word}</Text>
-                {item.example && (
-                  <Text variant="bodySmall" style={styles.example}>
-                    {item.example}
-                  </Text>
-                )}
                 <ProficiencyBar proficiency={item.proficiency} isKnown={item.isKnown} />
               </View>
-              <IconButton
-                icon="pencil"
-                size={24}
-                onPress={() => {
-                  goToEditWord(item.uuid);
-                }}
-                style={styles.editButton}
-              />
+              <View style={styles.cardActions}>
+                <IconButton
+                  icon="pencil"
+                  size={24}
+                  onPress={() => {
+                    goToEditWord(item.uuid);
+                  }}
+                  style={styles.editButton}
+                />
+                <IconButton
+                  icon="delete"
+                  size={24}
+                  onPress={() => handleDeleteWord(item)}
+                  style={styles.deleteButton}
+                />
+              </View>
             </Card.Content>
           </Card>
         )}
@@ -162,6 +364,26 @@ export default function ListPage() {
         visible={showInfo}
         onDismiss={() => setShowInfo(false)}
       />
+      <Portal>
+        <Dialog 
+          visible={!!selectedWord} 
+          onDismiss={() => setSelectedWord(null)}
+          style={styles.wordDialog}
+        >
+          {selectedWord && (
+            <>
+              <Dialog.Title>{selectedWord.translation}</Dialog.Title>
+              <Dialog.Content>
+                <Text variant="titleMedium" style={styles.dialogWord}>{selectedWord.word}</Text>
+                {wordDetails}
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button onPress={() => setSelectedWord(null)}>{i18n.t('close')}</Button>
+              </Dialog.Actions>
+            </>
+          )}
+        </Dialog>
+      </Portal>
     </View>
   );
 }
@@ -177,7 +399,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    padding: 16,
+    padding: 12,
     backgroundColor: '#fff',
   },
   headerContent: {
@@ -193,13 +415,14 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   card: {
-    marginHorizontal: 16,
-    marginBottom: 12,
+    marginHorizontal: 8,
+    marginBottom: 6,
   },
   cardContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: 8,
   },
   cardTextContainer: {
     flex: 1,
@@ -209,6 +432,9 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   editButton: {
+    margin: 0,
+  },
+  deleteButton: {
     margin: 0,
   },
   fab: {
@@ -226,22 +452,22 @@ const styles = StyleSheet.create({
     margin: 16,
   },
   flatList: {
-    marginTop: 16,
+    marginTop: 8,
   },
   proficiencyContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
   statusIndicator: {
-    width: 8,
-    height: 8,
+    width: 6,
+    height: 6,
     borderRadius: 2,
-    marginRight: 8,
+    marginRight: 6,
   },
   proficiencyBarContainer: {
     flex: 1,
-    height: 4,
+    height: 3,
     backgroundColor: '#E0E0E0',
     borderRadius: 2,
     overflow: 'hidden',
@@ -250,7 +476,30 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 2,
   },
-  helpButton: {
-    marginLeft: 8,
+  headerActions: {
+    flexDirection: 'row',
+  },
+  importInput: {
+    marginTop: 16,
+    minHeight: 120,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  wordDialog: {
+    maxHeight: '80%',
+  },
+  dialogWord: {
+    marginBottom: 16,
+  },
+  wordDetails: {
+    gap: 12,
+  },
+  detailSection: {
+    gap: 4,
+  },
+  detailLabel: {
+    color: '#666',
   },
 });

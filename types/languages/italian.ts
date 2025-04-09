@@ -4,8 +4,6 @@ const italianWordTypes: WordTypeConfig[] = [
     {
         type: 'noun',
         icon: 'book',
-        text: 'Sostantivo',
-        description: 'Una persona, luogo, cosa o idea',
         properties: [
             { name: 'gender', type: 'select', isRequired: false, options: ['m', 'f'] },
             { name: 'plural', type: 'text', isRequired: false },
@@ -15,8 +13,6 @@ const italianWordTypes: WordTypeConfig[] = [
     {
         type: 'verb',
         icon: 'run',
-        text: 'Verbo',
-        description: 'Un\'azione o stato dell\'essere',
         properties: [
             { 
                 name: 'presente', 
@@ -62,8 +58,6 @@ const italianWordTypes: WordTypeConfig[] = [
     {
         type: 'adjective',
         icon: 'format-color-fill',
-        text: 'Aggettivo',
-        description: 'Descrive un sostantivo',
         properties: [
             { name: 'comparative', type: 'text', isRequired: false },
             { name: 'superlative', type: 'text', isRequired: false }
@@ -72,8 +66,6 @@ const italianWordTypes: WordTypeConfig[] = [
     {
         type: 'adverb',
         icon: 'format-align-justify',
-        text: 'Avverbio',
-        description: 'Descrive un verbo, aggettivo o altro avverbio',
         properties: [
             { name: 'comparative', type: 'text', isRequired: false },
             { name: 'superlative', type: 'text', isRequired: false }
@@ -82,8 +74,6 @@ const italianWordTypes: WordTypeConfig[] = [
     {
         type: 'phrase',
         icon: 'format-quote-close',
-        text: 'Frase',
-        description: 'Un gruppo di parole con un significato specifico',
         properties: [
             { name: 'context', type: 'text', isRequired: false }
         ]
@@ -91,8 +81,6 @@ const italianWordTypes: WordTypeConfig[] = [
     {
         type: 'other',
         icon: 'help-circle',
-        text: 'Altro',
-        description: 'Qualsiasi altro tipo di parola o espressione',
         properties: [
             { name: 'notes', type: 'text', isRequired: false }
         ]

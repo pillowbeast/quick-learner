@@ -23,6 +23,18 @@ export async function setupDatabase() {
             db = await SQLite.openDatabaseAsync("language_learning.db");
             logger.info("SQLite database opened successfully");
 
+            // Check if we need to migrate from language_id to language_iso
+            const tableInfo = await db.getAllAsync("PRAGMA table_info(lists)");
+            const hasLanguageIso = tableInfo.some((col: any) => col.name === "language_iso");
+            const hasLanguageId = tableInfo.some((col: any) => col.name === "language_id");
+
+            if (hasLanguageId && !hasLanguageIso) {
+                logger.info("Migrating lists table from language_id to language_iso");
+                await db.execAsync(`
+                    ALTER TABLE lists RENAME COLUMN language_id TO language_iso;
+                `);
+            }
+
             await db.execAsync(`
                 CREATE TABLE IF NOT EXISTS languages (
                     uuid TEXT PRIMARY KEY UNIQUE,
@@ -34,12 +46,12 @@ export async function setupDatabase() {
 
                 CREATE TABLE IF NOT EXISTS lists (
                     uuid TEXT PRIMARY KEY UNIQUE,
-                    language_id TEXT NOT NULL,
+                    language_iso TEXT NOT NULL,
                     name TEXT NOT NULL,
                     description TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (language_id) REFERENCES languages(uuid) ON DELETE CASCADE
+                    FOREIGN KEY (language_iso) REFERENCES languages(iso) ON DELETE CASCADE
                 );
 
                 CREATE TABLE IF NOT EXISTS words (
@@ -69,7 +81,7 @@ export async function setupDatabase() {
                 );
 
                 CREATE INDEX IF NOT EXISTS idx_languages_iso ON languages(iso);
-                CREATE INDEX IF NOT EXISTS idx_lists_language_id ON lists(language_id);
+                CREATE INDEX IF NOT EXISTS idx_lists_language_iso ON lists(language_iso);
                 CREATE INDEX IF NOT EXISTS idx_words_list_id ON words(list_id);
                 CREATE INDEX IF NOT EXISTS idx_word_properties_word_id ON word_properties(word_id);
             `);

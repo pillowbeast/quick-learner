@@ -4,8 +4,6 @@ const germanWordTypes: WordTypeConfig[] = [
     {
         type: 'noun',
         icon: 'book',
-        text: 'Nomen',
-        description: 'Eine Person, ein Ort, eine Sache oder eine Idee',
         properties: [
             { name: 'article', type: 'select', isRequired: false, options: ['der', 'die', 'das'] },
             { name: 'plural', type: 'text', isRequired: false }
@@ -14,8 +12,6 @@ const germanWordTypes: WordTypeConfig[] = [
     {
         type: 'verb',
         icon: 'run',
-        text: 'Verb',
-        description: 'Eine Handlung oder ein Zustand',
         properties: [
             { 
                 name: 'present', 
@@ -49,8 +45,6 @@ const germanWordTypes: WordTypeConfig[] = [
     {
         type: 'adjective',
         icon: 'format-color-fill',
-        text: 'Adjektiv',
-        description: 'Beschreibt ein Nomen',
         properties: [
             { name: 'comparative', type: 'text', isRequired: false },
             { name: 'superlative', type: 'text', isRequired: false }
@@ -59,8 +53,6 @@ const germanWordTypes: WordTypeConfig[] = [
     {
         type: 'adverb',
         icon: 'format-align-justify',
-        text: 'Adverb',
-        description: 'Beschreibt ein Verb, Adjektiv oder anderes Adverb',
         properties: [
             { name: 'comparative', type: 'text', isRequired: false },
             { name: 'superlative', type: 'text', isRequired: false }
@@ -69,8 +61,6 @@ const germanWordTypes: WordTypeConfig[] = [
     {
         type: 'phrase',
         icon: 'format-quote-close',
-        text: 'Phrase',
-        description: 'Eine Gruppe von Wörtern mit einer bestimmten Bedeutung',
         properties: [
             { name: 'context', type: 'text', isRequired: false }
         ]
@@ -78,8 +68,6 @@ const germanWordTypes: WordTypeConfig[] = [
     {
         type: 'other',
         icon: 'help-circle',
-        text: 'Andere',
-        description: 'Jede andere Art von Wort oder Ausdruck',
         properties: [
             { name: 'notes', type: 'text', isRequired: false }
         ]

@@ -9,6 +9,7 @@ import { WordType } from '@/types/word';
 import { languageConfigs } from '@/types/languages';
 import { useDatabase } from '@/hooks/useDatabase.tsx';
 import WordForm from '@/components/WordForm';
+import i18n from '@/i18n';
 
 export default function WordDetailsPage() {
   const { goToAddWordType, goBack } = useNavigationHelper();
@@ -92,21 +93,21 @@ export default function WordDetailsPage() {
             iconColor="#10B981"
           />
         </Animated.View>
-        <Text variant="headlineSmall" style={styles.successText}>Word Added!</Text>
+        <Text variant="headlineSmall" style={styles.successText}>{i18n.t('word_added')}</Text>
         <View style={styles.buttonContainer}>
           <Button
             mode="contained"
             onPress={handleAddAnother}
             style={styles.button}
           >
-            Add Another
+            {i18n.t('add_another')}
           </Button>
           <Button
             mode="outlined"
             onPress={handleBackToList}
             style={styles.button}
           >
-            Back to List
+            {i18n.t('back_to_list')}
           </Button>
         </View>
       </View>
@@ -118,7 +119,7 @@ export default function WordDetailsPage() {
       type={type}
       config={config}
       onSubmit={handleSubmit}
-      submitButtonText="Add Word"
+      submitButtonText={i18n.t('add_word')}
     />
   );
 }

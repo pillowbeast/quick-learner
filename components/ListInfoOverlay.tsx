@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { Text, Button, Portal, Modal, Surface } from 'react-native-paper';
 import Carousel from 'react-native-reanimated-carousel';
+import i18n from '@/i18n';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -13,23 +14,23 @@ interface InfoSlide {
 
 const slides: InfoSlide[] = [
   {
-    title: 'Status Indicator',
-    description: 'The small square shows your last answer:\n• Gray: Not answered yet\n• Red: Last answer was wrong\n• Green: Last answer was correct',
+    title: i18n.t('status_indicator'),
+    description: i18n.t('status_indicator_desc'),
     icon: 'square',
   },
   {
-    title: 'Proficiency Bar',
-    description: 'The bar shows your overall progress:\n• Red to Gray: 0% to 50% proficiency\n• Gray to Green: 50% to 100% proficiency\n• Width shows your current level',
+    title: i18n.t('proficiency_bar'),
+    description: i18n.t('proficiency_bar_desc'),
     icon: 'chart-bar',
   },
   {
-    title: 'Add Words',
-    description: 'Use the + button to add new words to your list. You can add words one by one or import them in bulk.',
+    title: i18n.t('add_words_info'),
+    description: i18n.t('add_words_info_desc'),
     icon: 'plus',
   },
   {
-    title: 'Memorize',
-    description: 'The lightbulb button starts a memorization session where you can practice your words and improve your proficiency.',
+    title: i18n.t('memorize_info'),
+    description: i18n.t('memorize_info_desc'),
     icon: 'lightbulb',
   },
 ];
@@ -82,7 +83,7 @@ export const ListInfoOverlay: React.FC<ListInfoOverlayProps> = ({ visible, onDis
               onPress={onDismiss}
               style={styles.button}
             >
-              Got it!
+              {i18n.t('got_it')}
             </Button>
           </View>
         </View>

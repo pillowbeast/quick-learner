@@ -90,3 +90,7 @@ Join our community of developers:
 
 - [Expo on GitHub](https://github.com/expo/expo)
 - [Discord community](https://chat.expo.dev)
+
+## Tasks
+
+- [Verb Conjugation API](https://api.verbix.com/conjugator/html)

@@ -2,46 +2,30 @@ import { getDatabase } from "./init";
 import { List, ListWithWords, UUID } from "./types";
 import { generateUUID } from "../../utils/uuid";
 import { logger } from "@/utils/logger";
+import { WordProperties, WordType } from "@/types/word";
+import { getWordsByList, addWord } from "./word";
 
-interface DbList {
-    uuid: string;
-    language_id: string;
-    name: string;
-    description?: string;
-    created_at: string;
-    updated_at: string;
-}
-
-const mapDbListToList = (result: DbList): List => ({
-    uuid: result.uuid,
-    languageId: result.language_id,
-    name: result.name,
-    description: result.description,
-    created_at: result.created_at,
-    updated_at: result.updated_at,
-});
-
-export async function addList(
-    languageId: UUID,
-    name: string,
-    description?: string
-): Promise<List> {
-    logger.debug(`Adding list: ${name} for language ${languageId}`);
-    const db = getDatabase();
+export async function addList(language_iso: string, name: string, description?: string): Promise<List> {
+    const db = await getDatabase();
     const uuid = generateUUID();
     const now = new Date().toISOString();
-    await db.runAsync(
-        "INSERT INTO lists (uuid, language_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-        [uuid, languageId, name, description, now, now]
-    );
-    return {
+
+    const listObj: List = {
         uuid,
-        languageId,
+        language_iso,
         name,
-        description: description || undefined,
+        description,
         created_at: now,
-        updated_at: now,
+        updated_at: now
     };
+
+    await db.runAsync(
+        `INSERT INTO lists (uuid, language_iso, name, description, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [uuid, language_iso, name, description, now, now]
+    );
+
+    return listObj;
 }
 
 export async function getList(uuid: UUID): Promise<List | null> {
@@ -49,17 +33,17 @@ export async function getList(uuid: UUID): Promise<List | null> {
     const result = await db.getFirstAsync(
         "SELECT * FROM lists WHERE uuid = ?",
         [uuid]
-    ) as DbList | null;
-    return result ? mapDbListToList(result) : null;
+    ) as List | null;
+    return result;
 }
 
-export async function getListsByLanguage(languageId: UUID): Promise<List[]> {
+export async function getListsByLanguage(language_iso: string): Promise<List[]> {
     const db = getDatabase();
     const results = await db.getAllAsync(
-        "SELECT * FROM lists WHERE language_id = ? ORDER BY name",
-        [languageId]
-    ) as DbList[];
-    return results.map(mapDbListToList);
+        "SELECT * FROM lists WHERE language_iso = ? ORDER BY name",
+        [language_iso]
+    ) as List[];
+    return results;
 }
 
 export async function updateList(
@@ -88,14 +72,75 @@ export async function getListWithWords(uuid: UUID): Promise<ListWithWords | null
     const result = await db.getFirstAsync(
         "SELECT * FROM lists WHERE uuid = ?",
         [uuid]
-    ) as DbList | null;
+    ) as List | null;
     if (!result) {
         return null;
     }
-    const list = mapDbListToList(result);
+    const list = result;
     const words = await db.getAllAsync(
         "SELECT * FROM words WHERE list_id = ?",
         [uuid]
     );
     return { ...list, words };
+}
+
+export interface ExportedList {
+    name: string;
+    description?: string;
+    language_iso: string;
+    words: {
+        word: string;
+        translation: string;
+        type: WordType;
+        example?: string;
+        properties: WordProperties;
+    }[];
+}
+
+export async function exportList(listId: string): Promise<ExportedList> {
+    const list = await getList(listId);
+    if (!list) {
+        throw new Error('List not found');
+    }
+
+    const words = await getWordsByList(listId);
+
+    return {
+        name: list.name,
+        description: list.description,
+        language_iso: list.language_iso,
+        words: words.map((word: any) => ({
+            word: word.word,
+            translation: word.translation,
+            type: word.type,
+            example: word.example,
+            properties: word.properties
+        }))
+    };
+}
+
+export async function importList(exportedList: ExportedList): Promise<string> {
+    const db = await getDatabase();
+    const listId = generateUUID();
+    const now = new Date().toISOString();
+
+    // Create the list
+    await db.runAsync(
+        `INSERT INTO lists (uuid, name, description, language_iso, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [listId, exportedList.name, exportedList.description || '', exportedList.language_iso, now, now]
+    );
+
+    // Add all words
+    for (const word of exportedList.words) {
+        await addWord(
+            listId,
+            word.word,
+            word.translation,
+            word.type,
+            word.example
+        );
+    }
+
+    return listId;
 } 

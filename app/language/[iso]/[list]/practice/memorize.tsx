@@ -40,7 +40,7 @@ export default function MemorizePage() {
 
   const {
     currentWord,
-    currentIndex,
+    remainingWords,
     handleSuccess,
     nextWord,
   } = useWordSelection({
@@ -52,11 +52,15 @@ export default function MemorizePage() {
 
   useEffect(() => {
     // Check if we've reached the end of the words
-    if (words.length > 0 && currentIndex >= words.length) {
-      // Navigate back to the list
-      goBack();
+    if (remainingWords === 0 && words.length > 0) {
+      logger.debug('No more words to practice, navigating back');
+      // Add a small delay to ensure animations complete
+      const timer = setTimeout(() => {
+        goBack();
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [currentIndex, words.length]);
+  }, [remainingWords, words.length, goBack]);
 
   useEffect(() => {
     const loadWords = async () => {
@@ -248,6 +252,11 @@ export default function MemorizePage() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.content}>
+        <View style={styles.progressContainer}>
+          <Text style={styles.progressText}>
+            {remainingWords} {remainingWords === 1 ? 'word' : 'words'} remaining
+          </Text>
+        </View>
         <GestureDetector gesture={swipe_knowledge}>
           <Animated.View
             style={[
@@ -268,15 +277,15 @@ export default function MemorizePage() {
                 <>
                   <View style={styles.line}>
                     <Text style={styles.translationText}>
-                      {currentWord.type === 'noun' && wordProperties[currentWord.uuid]?.gender?.value ? (
-                        <>
-                          {String(wordProperties[currentWord.uuid].gender.value)}{' '}
-                          {currentWord.translation}
-                          {' '}({String(wordProperties[currentWord.uuid].gender.value)})
-                        </>
-                      ) : (
-                        currentWord.translation
-                      )}
+                      <>
+                        {wordProperties[currentWord.uuid]?.article?.value && 
+                          `${String(wordProperties[currentWord.uuid].article.value)} `
+                        }
+                        {currentWord.translation}
+                        {wordProperties[currentWord.uuid]?.gender?.value && 
+                          ` (${String(wordProperties[currentWord.uuid].gender.value)})`
+                        }
+                      </>
                     </Text>
                   </View>
                   {currentWord.example && (
@@ -311,8 +320,22 @@ export default function MemorizePage() {
         <Animated.View style={[styles.crossContainer, crossStyle]}>
           <MaterialIcons name="close" size={80} color="#6B7280" />
         </Animated.View>
-      </View>
 
+        <View style={styles.progressBarContainer}>
+          <View 
+            style={[
+              styles.progressBar, 
+              { 
+                width: `${((words.length - remainingWords) / words.length) * 100}%`,
+                backgroundColor: remainingWords === 0 ? '#10B981' : '#3B82F6'
+              }
+            ]} 
+          />
+          <Text style={styles.progressBarText}>
+            {words.length - remainingWords}/{words.length} words practiced
+          </Text>
+        </View>
+      </View>
     </GestureHandlerRootView>
   );
 }
@@ -350,7 +373,7 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
   },
   line: {
-    height: 42,
+    height: 48,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
     marginBottom: 8,
@@ -414,5 +437,37 @@ const styles = StyleSheet.create({
   propertyValue: {
     fontSize: 14,
     opacity: 0.8,
+  },
+  progressContainer: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  progressText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  progressBarContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#3B82F6',
+    borderRadius: 2,
+    marginBottom: 8,
+  },
+  progressBarText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });

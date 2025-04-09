@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, StyleSheet } from "react-native";
 import CountryFlag from "react-native-country-flag";
 
 // Map language codes to country codes
@@ -16,7 +16,7 @@ export default function Flag({ iso }: { iso: string }) {
     const countryCode = languageToCountryCode[iso.toLowerCase()] || iso.toLowerCase();
     return (
         <View style={styles.container}>
-            <CountryFlag isoCode={countryCode} size={25} />
+            <CountryFlag isoCode={countryCode} size={30} />
         </View>
     );
 }
@@ -25,8 +25,6 @@ const styles = StyleSheet.create({
     container: {
         justifyContent: "center",
         alignItems: "center",
-        height: 50,
-        width: 100,
-        backgroundColor: "#fff",
+        padding: 2,
     },
 });

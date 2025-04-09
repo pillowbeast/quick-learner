@@ -7,6 +7,7 @@ import { useDatabase } from '@/hooks/useDatabase';
 import Flag from '@/components/Flag';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigationContext, Language } from '@/hooks/useNavigationContext';
+import i18n from '@/i18n';
 
 export default function LanguageSelector() {
   const theme = useTheme();
@@ -76,7 +77,7 @@ export default function LanguageSelector() {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>Initializing database...</Text>
+        <Text style={styles.loadingText}>{i18n.t('loading_database')}</Text>
       </View>
     );
   }
@@ -97,7 +98,7 @@ export default function LanguageSelector() {
               onPress={() => handleLanguageSelect(language)}
               style={styles.button}
             >
-              Learn
+              {i18n.t('learn')}
             </Button>
           </Surface>
         ))}
@@ -111,7 +112,7 @@ export default function LanguageSelector() {
             onPress={goToAddLanguage}
             onLongPress={showDevMenu}
           />
-          <Text style={styles.addText}>Add Language</Text>
+          <Text style={styles.addText}>{i18n.t('add_language')}</Text>
         </Surface>
       </View>
     </ScrollView>

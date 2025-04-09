@@ -5,11 +5,12 @@ import { useRouter } from 'expo-router';
 import Carousel from 'react-native-reanimated-carousel';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '@/i18n';
 
 const { width } = Dimensions.get('window');
 
 interface Slide {
-    icon: string;
+    icon: keyof typeof MaterialCommunityIcons.glyphMap;
     title: string;
     description: string;
 }
@@ -17,81 +18,73 @@ interface Slide {
 const slides: Slide[] = [
     {
         icon: 'book-open-variant',
-        title: 'Learn Languages',
-        description: 'Start by adding a language you want to learn. We support multiple languages with their unique characteristics.',
+        title: i18n.t('learn_languages'),
+        description: i18n.t('learn_languages_desc'),
     },
     {
         icon: 'format-list-bulleted',
-        title: 'Create Word Lists',
-        description: 'Organize your vocabulary into lists. Create lists for different topics, difficulty levels, or any other category you prefer.',
+        title: i18n.t('create_lists'),
+        description: i18n.t('create_lists_desc'),
     },
     {
         icon: 'plus-circle',
-        title: 'Add Words',
-        description: 'Add words with translations, examples, and additional properties specific to each language.',
+        title: i18n.t('add_words'),
+        description: i18n.t('add_words_desc'),
     },
     {
         icon: 'lightbulb',
-        title: 'Practice & Memorize',
-        description: 'Use our practice and memorization tools to reinforce your learning. Track your progress and improve your vocabulary.',
+        title: i18n.t('practice_memorize'),
+        description: i18n.t('practice_memorize_desc'),
     },
 ];
 
-export default function OnboardingScreen() {
+export default function Onboarding() {
     const theme = useTheme();
     const router = useRouter();
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const handleGetStarted = async () => {
-        try {
-            await AsyncStorage.setItem('hasSeenOnboarding', 'true');
-            router.replace('/home');
-        } catch (error) {
-            console.error('Error setting onboarding status:', error);
-            // Still navigate to home even if setting the flag fails
-            router.replace('/home');
-        }
+    const handleComplete = async () => {
+        await AsyncStorage.setItem('@quick_learner_onboarding_complete', 'true');
+        router.replace('/home');
     };
-
-    const renderItem = ({ item, index }: { item: Slide; index: number }) => (
-        <View style={[styles.slide, { backgroundColor: theme.colors.background }]}>
-            <MaterialCommunityIcons
-                name={item.icon as any}
-                size={80}
-                color={theme.colors.primary}
-                style={styles.icon}
-            />
-            <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onBackground }]}>
-                {item.title}
-            </Text>
-            <Text variant="bodyLarge" style={[styles.description, { color: theme.colors.onBackground }]}>
-                {item.description}
-            </Text>
-        </View>
-    );
 
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <Carousel
                 loop={false}
                 width={width}
-                height={width * 1.2}
+                height={400}
                 data={slides}
-                scrollAnimationDuration={1000}
-                onSnapToItem={(index: number) => setCurrentIndex(index)}
-                renderItem={renderItem}
+                onSnapToItem={setCurrentIndex}
+                renderItem={({ item }) => (
+                    <View style={styles.slide}>
+                        <MaterialCommunityIcons
+                            name={item.icon}
+                            size={64}
+                            color={theme.colors.primary}
+                            style={styles.icon}
+                        />
+                        <Text variant="headlineMedium" style={styles.title}>
+                            {item.title}
+                        </Text>
+                        <Text variant="bodyLarge" style={styles.description}>
+                            {item.description}
+                        </Text>
+                    </View>
+                )}
             />
             <View style={styles.footer}>
                 <View style={styles.pagination}>
-                    {slides.map((_, index: number) => (
+                    {slides.map((_, index) => (
                         <View
                             key={index}
                             style={[
                                 styles.paginationDot,
                                 {
-                                    backgroundColor: index === currentIndex
-                                        ? theme.colors.primary
-                                        : theme.colors.outline,
+                                    backgroundColor:
+                                        currentIndex === index
+                                            ? theme.colors.primary
+                                            : theme.colors.outline,
                                 },
                             ]}
                         />
@@ -99,10 +92,10 @@ export default function OnboardingScreen() {
                 </View>
                 <Button
                     mode="contained"
-                    onPress={handleGetStarted}
+                    onPress={handleComplete}
                     style={styles.button}
                 >
-                    Get Started
+                    {i18n.t('got_it')}
                 </Button>
             </View>
         </View>
