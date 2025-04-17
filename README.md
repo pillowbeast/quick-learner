@@ -94,3 +94,4 @@ Join our community of developers:
 ## Tasks
 
 - [Verb Conjugation API](https://api.verbix.com/conjugator/html)
+- [verb & conjugation](https://github.com/ian-hamlin/verb-data?tab=readme-ov-file)
