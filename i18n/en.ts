@@ -50,6 +50,12 @@ export default {
     list_name: "List Name",
     default_list: "Default List",
     default_list_description: "A collection of common words to get started",
+    search_words: "Search",
+    sort_by: "Sort by:",
+    alphabetical: "ABC",
+    date: "Date",
+    proficiency: "Proficiency",
+    word_type: "Word Type",
 
     // Practice
     study: "Study",
@@ -69,6 +75,7 @@ export default {
     phrase_description: "A group of words with a specific meaning",
     other: "Other",
     other_description: "Any other type of word or expression",
+    notes: "Notes",
 
     // Onboarding
     learn_languages: "Learn Languages",

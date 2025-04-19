@@ -8,6 +8,7 @@ import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import Flag from '@/components/Flag';
 import i18n from '@/i18n';
+import BackButton from '@/components/BackButton';
 
 export default function LanguagePage() {
   const theme = useTheme();
@@ -116,6 +117,7 @@ export default function LanguagePage() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <BackButton />
       <Surface style={styles.header} elevation={0}>
         <Text variant="headlineMedium" style={styles.title}>{state.currentLanguage.name}</Text>
         <Flag iso={state.currentLanguage.iso} />

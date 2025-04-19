@@ -28,26 +28,24 @@
   - [ ] Create irregular verbs exclusion list
   - [ ] Add verb tense management
 
-- [ ] List management enhancements
-  - [ ] Add advanced filtering options (proficiency, date, abc, word type)
-  - [ ] Implement word search functionality
-  - [ ] Add list sorting capabilities
-  - [ ] Create list export/import features
+- [x] List management enhancements
+  - [x] Add advanced filtering options (proficiency, date, abc, word type)
+  - [x] Implement word search functionality
+  - [x] Add list sorting capabilities
+  - [x] Create list export/import features
 
-- [ ] Practice customization
-  - [ ] Add word count selection
-  - [ ] Implement repetition settings
-  - [ ] Add word type filtering in practice
+- [x] Practice customization
+  - [x] Add word count selection
+  - [x] Implement repetition settings
+  - [x] Practice by word type
   - [ ] Create custom practice sessions
 
 ### Improvements
 - [ ] UI/UX Enhancements
-  - [ ] Fix keyboard overlap with buttons
-  - [ ] Add proper back button navigation
-  - [ ] Improve example text display formatting
-  - [ ] Enhance word tile interaction
-  - [ ] Fix edit button accessibility after swiping
-  - [ ] Implement color-coding/icon system for word types
+  - [x] Fix keyboard overlap with buttons
+  - [x] Add proper back button navigation
+  - [x] Implement color-coding/icon system for word types
+  - [ ] Use Icon for App
 
 - [ ] Learning Algorithm
   - [ ] Implement spaced repetition system
@@ -56,8 +54,7 @@
   - [ ] Add progress tracking improvements
 
 ### Bug Fixes
-- [ ] Fix onboarding persistence issue
-- [ ] Resolve memorize page refresh after editing
-- [ ] Fix word tile edit button interaction
+- [x] Fix onboarding persistence issue
+- [x] Resolve memorize page refresh after editing
+- [x] Fix word tile edit button interaction
 - [ ] Address example text display issues
-- [ ] Fix keyboard overlap with UI elements

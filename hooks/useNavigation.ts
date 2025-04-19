@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
-import { useNavigationContext, List, Language } from "./useNavigationContext";
+import { useNavigationContext, Language } from "./useNavigationContext";
+import { List } from "./database/types";
 
 export function useNavigationHelper() {
     const router = useRouter();
@@ -32,11 +33,14 @@ export function useNavigationHelper() {
             }
             router.push(`/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/study`);
         },
-        goToMemorize: () => {
+        goToMemorize: (params?: { settings: string }) => {
             if (!state.currentLanguage?.iso || !state.currentList?.name) {
                 throw new Error("Language and list must be set before navigating to memorize");
             }
-            router.push(`/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/memorize`);
+            router.push({
+                pathname: `/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/memorize`,
+                params
+            } as any);
         },
         goToAddWordType: () => {
             if (!state.currentLanguage?.iso || !state.currentList?.name) {
@@ -60,6 +64,12 @@ export function useNavigationHelper() {
             router.push({
                 pathname: `/language/${state.currentLanguage.iso}/${state.currentList.name}/word/${uuid}`,
             } as any);
+        },
+        goToSettings: () => {
+            if (!state.currentLanguage?.iso || !state.currentList?.name) {
+                throw new Error("Language and list must be set before navigating to settings");
+            }
+            router.push(`/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/settings`);
         },
         getCurrentLanguage: () => state.currentLanguage,
         getCurrentList: () => state.currentList,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { IconButton } from 'react-native-paper';
@@ -13,6 +13,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import tw from 'twrnc';
+import { useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 
 import { useDatabase } from '@/hooks/useDatabase';
 import { Word } from '@/hooks/database/types';
@@ -21,6 +23,8 @@ import { useWordSelection } from '@/hooks/useWordSelection';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { WordProperties, PropertyType } from '@/types/word';
 import { logger } from '@/utils/logger';
+import { languageConfigs } from '@/types/languages';
+import BackButton from '@/components/BackButton';
 
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.25;
@@ -31,6 +35,9 @@ export default function MemorizePage() {
   const { state, setCurrentList } = useNavigationContext();
   const { goToEditWord, goBack } = useNavigationHelper();
   const database = useDatabase();
+  const config = languageConfigs[state.currentLanguage?.iso || 'en'] || languageConfigs.en;
+  const params = useLocalSearchParams();
+  const settings = params.settings ? JSON.parse(params.settings as string) : null;
 
   const [isRevealed, setIsRevealed] = useState(false);
   const [words, setWords] = useState<Word[]>([]);
@@ -45,6 +52,7 @@ export default function MemorizePage() {
     nextWord,
   } = useWordSelection({
     words,
+    settings,
     onWordChange: (word) => {
       setIsRevealed(false);
     },
@@ -62,43 +70,46 @@ export default function MemorizePage() {
     }
   }, [remainingWords, words.length, goBack]);
 
-  useEffect(() => {
-    const loadWords = async () => {
-      if (!state.currentLanguage?.uuid || !state.currentList?.uuid) return;
+  const loadWords = useCallback(async () => {
+    if (!state.currentList?.uuid) return;
 
-      const loadedWords = await database.getWordsByList(state.currentList.uuid);
-      setWords(loadedWords);
-      logger.debug(`Loaded ${loadedWords.length} words for list ${state.currentList.uuid}`);
+    const loadedWords = await database.getWordsByList(state.currentList.uuid);
+    setWords(loadedWords);
+    logger.debug(`Loaded ${loadedWords.length} words for list ${state.currentList.uuid}`);
 
-      // Load properties for all words
-      const properties: Record<string, WordProperties> = {};
-      for (const word of loadedWords) {
-        const wordProps = await database.getWordProperties(word.uuid);
-        const formattedProperties: WordProperties = {};
-        
-        for (const prop of wordProps) {
-          if (prop.type === 'conjugation') {
-            formattedProperties[prop.name] = {
-              name: prop.name,
-              value: JSON.parse(prop.value),
-              type: 'conjugation'
-            };
-            console.log(formattedProperties);
-          } else {
-            formattedProperties[prop.name] = {
-              name: prop.name,
-              value: prop.value,
-              type: prop.type as PropertyType
-            };
-          }
+    // Load properties for all words
+    const properties: Record<string, WordProperties> = {};
+    for (const word of loadedWords) {
+      const wordProps = await database.getWordProperties(word.uuid);
+      const formattedProperties: WordProperties = {};
+      
+      for (const prop of wordProps) {
+        if (prop.type === 'conjugation') {
+          formattedProperties[prop.name] = {
+            name: prop.name,
+            value: JSON.parse(prop.value),
+            type: 'conjugation'
+          };
+        } else {
+          formattedProperties[prop.name] = {
+            name: prop.name,
+            value: prop.value,
+            type: prop.type as PropertyType
+          };
         }
-        
-        properties[word.uuid] = formattedProperties;
       }
-      setWordProperties(properties);
-    };
-    loadWords();
-  }, [state.currentLanguage?.uuid, state.currentList?.uuid]);
+      
+      properties[word.uuid] = formattedProperties;
+    }
+    setWordProperties(properties);
+  }, [state.currentList?.uuid, database]);
+
+  // Add useFocusEffect to reload words when returning to this screen
+  useFocusEffect(
+    useCallback(() => {
+      loadWords();
+    }, [loadWords])
+  );
 
   // Handle database update and next word when shouldUpdate is true
   useEffect(() => {
@@ -210,6 +221,12 @@ export default function MemorizePage() {
     logger.debug(`Tapped on word ${currentWord?.word}`);
   };
 
+  const handleEditPress = () => {
+    if (currentWord) {
+      goToEditWord(currentWord.uuid);
+    }
+  };
+
   const renderProperties = (properties: WordProperties) => {
     return Object.entries(properties).map(([name, prop]) => {
       if (prop.type === 'conjugation') {
@@ -235,6 +252,10 @@ export default function MemorizePage() {
     });
   };
 
+  const getWordTypeConfig = (type: string) => {
+    return config.wordTypes.find(wt => wt.type === type);
+  };
+
   if (words.length === 0) {
     return (
       <View style={styles.container}>
@@ -251,6 +272,7 @@ export default function MemorizePage() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
+      <BackButton />
       <View style={styles.content}>
         <View style={styles.progressContainer}>
           <Text style={styles.progressText}>
@@ -262,6 +284,7 @@ export default function MemorizePage() {
             style={[
               styles.card,
               animatedStyle,
+              currentWord?.type && { borderLeftWidth: 4, borderLeftColor: '#3B82F6' }
             ]}
           >
             <TouchableOpacity
@@ -298,16 +321,33 @@ export default function MemorizePage() {
                       {renderProperties(wordProperties[currentWord.uuid])}
                     </View>
                   )}
-                  <IconButton
-                    icon="pencil"
-                    size={24}
-                    onPress={() => goToEditWord(currentWord.uuid)}
-                    style={styles.editButton}
-                  />
+                  <TouchableOpacity
+                    onPress={handleEditPress}
+                    style={styles.editButtonContainer}
+                  >
+                    <IconButton
+                      icon="pencil"
+                      size={24}
+                      style={styles.editButton}
+                    />
+                  </TouchableOpacity>
                 </>
               )}
               {!isRevealed && (
                 <Text style={styles.tapHint}>Tap to reveal</Text>
+              )}
+              {currentWord?.type && (
+                <View style={styles.typeIndicatorContainer}>
+                  <View style={styles.typeIndicator}>
+                    <IconButton
+                      icon={getWordTypeConfig(currentWord.type)?.icon || 'help-circle'}
+                      size={24}
+                      iconColor="#3B82F6"
+                      style={styles.typeIcon}
+                    />
+                    <Text style={styles.typeText}>{getWordTypeConfig(currentWord.type)?.type || ''}</Text>
+                  </View>
+                </View>
               )}
             </TouchableOpacity>
           </Animated.View>
@@ -371,6 +411,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 16,
     paddingLeft: 12,
+    position: 'relative',
   },
   line: {
     height: 48,
@@ -415,10 +456,14 @@ const styles = StyleSheet.create({
     top: '50%',
     transform: [{ translateY: -40 }],
   },
-  editButton: {
+  editButtonContainer: {
     position: 'absolute',
     top: 16,
     right: 16,
+    zIndex: 1,
+  },
+  editButton: {
+    margin: 0,
   },
   propertiesContainer: {
     marginTop: 8,
@@ -469,5 +514,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  typeIndicatorContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  typeIndicator: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  typeIcon: {
+    margin: 0,
+  },
+  typeText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 4,
   },
 });

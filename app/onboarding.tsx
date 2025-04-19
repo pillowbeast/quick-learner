@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '@/i18n';
 
 const { width } = Dimensions.get('window');
+const ONBOARDING_KEY = '@quick_learner_onboarding_complete';
 
 interface Slide {
     icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -44,8 +45,14 @@ export default function Onboarding() {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const handleComplete = async () => {
-        await AsyncStorage.setItem('@quick_learner_onboarding_complete', 'true');
-        router.replace('/home');
+        try {
+            await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+            router.replace('/home');
+        } catch (error) {
+            console.error('Error saving onboarding status:', error);
+            // Still navigate to home even if saving fails
+            router.replace('/home');
+        }
     };
 
     return (

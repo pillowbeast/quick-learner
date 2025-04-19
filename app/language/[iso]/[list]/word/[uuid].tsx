@@ -175,7 +175,9 @@ export default function EditWordPage() {
   };
 
   const handleBack = () => {
-    goBack();
+    setTimeout(() => {
+      goBack();
+    }, 100);
   };
 
   if (showSuccess) {
