@@ -3,6 +3,13 @@
 ## Version 0.0.0
 
 ### Major Changes
+- [ ] Voice to Word implementation
+  - [ ] Automatically fill out translation
+
+- [ ] AI powered extension of words
+
+- [ ] Move 100% completion words to Wortschatz
+
 - [ ] Implement marketplace system
   - [ ] Create marketplace UI
   - [ ] Implement vocabulary list sharing functionality
