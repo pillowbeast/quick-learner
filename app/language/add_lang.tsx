@@ -2,12 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Text, Surface, Button, ActivityIndicator } from 'react-native-paper';
 import { useTheme } from 'react-native-paper';
+
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useDatabase } from '@/hooks/useDatabase.tsx';
-import { languageConfigs } from '@/types/languages';
 import { Language } from '@/hooks/useNavigationContext';
+
 import Flag from '@/components/Flag';
+import SafeAreaWrapper from '@/components/SafeAreaWrapper';
+
 import { WordType } from '@/types/word';
+import { languageConfigs } from '@/types/languages';
+
 import i18n from '@/i18n';
 
 interface InitialWord {
@@ -102,7 +107,7 @@ export default function AddLanguagePage() {
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <SafeAreaWrapper backgroundColor={ theme.colors.background }>
             <Surface style={styles.header} elevation={0}>
                 <Text variant="headlineMedium" style={styles.title}>{i18n.t('add_language')}</Text>
             </Surface>
@@ -140,7 +145,7 @@ export default function AddLanguagePage() {
                     );
                 }}
             />
-        </View>
+        </SafeAreaWrapper>
     );
 }
 

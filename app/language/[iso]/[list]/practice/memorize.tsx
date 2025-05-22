@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { IconButton } from 'react-native-paper';
@@ -25,6 +25,7 @@ import { WordProperties, PropertyType } from '@/types/word';
 import { logger } from '@/utils/logger';
 import { languageConfigs } from '@/types/languages';
 import BackButton from '@/components/BackButton';
+import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.25;
@@ -32,35 +33,83 @@ const CARD_WIDTH = width * 0.9;
 const CARD_HEIGHT = height * 0.7;
 
 export default function MemorizePage() {
-  const { state, setCurrentList } = useNavigationContext();
+  const { state } = useNavigationContext();
   const { goToEditWord, goBack } = useNavigationHelper();
   const database = useDatabase();
   const config = languageConfigs[state.currentLanguage?.iso || 'en'] || languageConfigs.en;
   const params = useLocalSearchParams();
   const settings = params.settings ? JSON.parse(params.settings as string) : null;
+  
+  // Using refs for values that don't need to trigger re-renders
+  const initialLoadCompleted = useRef(false);
 
   const [isRevealed, setIsRevealed] = useState(false);
   const [words, setWords] = useState<Word[]>([]);
   const [shouldUpdate, setShouldUpdate] = useState(false);
   const [lastDirection, setLastDirection] = useState<number | null>(null);
   const [wordProperties, setWordProperties] = useState<Record<string, WordProperties>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     currentWord,
     remainingWords,
+    totalFilteredWords,
+    totalOriginalWords,
     handleSuccess,
     nextWord,
   } = useWordSelection({
     words,
     settings,
-    onWordChange: (word) => {
+    onWordChange: () => {
       setIsRevealed(false);
     },
   });
 
+  const loadWords = useCallback(async () => {
+    if (!state.currentList?.uuid) return;
+
+    try {
+      setIsLoading(true);
+      const loadedWords = await database.getWordsByList(state.currentList.uuid);
+      setWords(loadedWords);
+      logger.debug(`Loaded ${loadedWords.length} words for list ${state.currentList.uuid}`);
+
+      // Load properties for all words
+      const properties: Record<string, WordProperties> = {};
+      for (const word of loadedWords) {
+        const wordProps = await database.getWordProperties(word.uuid);
+        const formattedProperties: WordProperties = {};
+        
+        for (const prop of wordProps) {
+          if (prop.type === 'conjugation') {
+            formattedProperties[prop.name] = {
+              name: prop.name,
+              value: JSON.parse(prop.value),
+              type: 'conjugation'
+            };
+          } else {
+            formattedProperties[prop.name] = {
+              name: prop.name,
+              value: prop.value,
+              type: prop.type as PropertyType
+            };
+          }
+        }
+        
+        properties[word.uuid] = formattedProperties;
+      }
+      setWordProperties(properties);
+      initialLoadCompleted.current = true;
+    } catch (error) {
+      logger.error('Error loading words for practice:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [state.currentList?.uuid, database]);
+
+  // Check if we've reached the end of the words
   useEffect(() => {
-    // Check if we've reached the end of the words
-    if (remainingWords === 0 && words.length > 0) {
+    if (initialLoadCompleted.current && remainingWords === 0 && totalFilteredWords > 0) {
       logger.debug('No more words to practice, navigating back');
       // Add a small delay to ensure animations complete
       const timer = setTimeout(() => {
@@ -68,63 +117,32 @@ export default function MemorizePage() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [remainingWords, words.length, goBack]);
-
-  const loadWords = useCallback(async () => {
-    if (!state.currentList?.uuid) return;
-
-    const loadedWords = await database.getWordsByList(state.currentList.uuid);
-    setWords(loadedWords);
-    logger.debug(`Loaded ${loadedWords.length} words for list ${state.currentList.uuid}`);
-
-    // Load properties for all words
-    const properties: Record<string, WordProperties> = {};
-    for (const word of loadedWords) {
-      const wordProps = await database.getWordProperties(word.uuid);
-      const formattedProperties: WordProperties = {};
-      
-      for (const prop of wordProps) {
-        if (prop.type === 'conjugation') {
-          formattedProperties[prop.name] = {
-            name: prop.name,
-            value: JSON.parse(prop.value),
-            type: 'conjugation'
-          };
-        } else {
-          formattedProperties[prop.name] = {
-            name: prop.name,
-            value: prop.value,
-            type: prop.type as PropertyType
-          };
-        }
-      }
-      
-      properties[word.uuid] = formattedProperties;
-    }
-    setWordProperties(properties);
-  }, [state.currentList?.uuid, database]);
+  }, [remainingWords, totalFilteredWords, goBack]);
 
   // Add useFocusEffect to reload words when returning to this screen
   useFocusEffect(
     useCallback(() => {
       loadWords();
+      return () => {
+        initialLoadCompleted.current = false;
+      };
     }, [loadWords])
   );
 
   // Handle database update and next word when shouldUpdate is true
   useEffect(() => {
+    if (!shouldUpdate || lastDirection === null) return;
+    
     const timeout = setTimeout(() => {
-      if (shouldUpdate && lastDirection !== null) {
-        const isSuccess = lastDirection > 0;
-        handleSuccess(isSuccess);
-        nextWord();
-        setShouldUpdate(false);
-        setLastDirection(null);
-      }
+      const isSuccess = lastDirection > 0;
+      handleSuccess(isSuccess);
+      nextWord();
+      setShouldUpdate(false);
+      setLastDirection(null);
     }, 150);
 
     return () => clearTimeout(timeout);
-  }, [shouldUpdate, lastDirection]);
+  }, [shouldUpdate, lastDirection, handleSuccess, nextWord]);
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -256,127 +274,179 @@ export default function MemorizePage() {
     return config.wordTypes.find(wt => wt.type === type);
   };
 
-  if (words.length === 0) {
+  if (isLoading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaWrapper backgroundColor="#F8F9FA">
         <View style={tw`flex-1 justify-center items-center`}>
-          <Text style={tw`text-lg text-gray-500`}>No words available in this list</Text>
+          <Text style={tw`text-lg text-gray-500`}>Loading words...</Text>
         </View>
-      </View>
+      </SafeAreaWrapper>
     );
   }
 
+  if (totalOriginalWords === 0) {
+    return (
+      <SafeAreaWrapper backgroundColor="#F8F9FA">
+        <View style={tw`flex-1 justify-center items-center`}>
+          <Text style={tw`text-lg text-gray-500`}>No words available in this list</Text>
+        </View>
+      </SafeAreaWrapper>
+    );
+  }
+
+  if (!currentWord && totalFilteredWords > 0) {
+    return (
+      <SafeAreaWrapper backgroundColor="#F8F9FA">
+        <View style={tw`flex-1 justify-center items-center`}>
+          <Text style={tw`text-lg text-gray-500`}>Loading...</Text>
+        </View>
+      </SafeAreaWrapper>
+    );
+  }
+
+  // If we have words but all were filtered out based on settings
+  if (totalOriginalWords > 0 && totalFilteredWords === 0) {
+    return (
+      <SafeAreaWrapper backgroundColor="#F8F9FA">
+        <View style={tw`flex-1 justify-center items-center p-6`}>
+          <Text style={tw`text-lg text-gray-500 text-center mb-4`}>
+            No words match your practice settings
+          </Text>
+          <Text style={tw`text-base text-gray-400 text-center`}>
+            Try changing the word types or proficiency mode
+          </Text>
+        </View>
+      </SafeAreaWrapper>
+    );
+  }
+
+  // Calculate the progress percentage
+  const practiceProgress = totalFilteredWords > 0 
+    ? ((totalFilteredWords - remainingWords) / totalFilteredWords) * 100 
+    : 0;
+
   if (!currentWord) {
-    return null;
+    return (
+      <SafeAreaWrapper backgroundColor="#F8F9FA">
+        <View style={tw`flex-1 justify-center items-center`}>
+          <Text style={tw`text-lg text-gray-500`}>Ready to start practice</Text>
+        </View>
+      </SafeAreaWrapper>
+    );
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <BackButton />
-      <View style={styles.content}>
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>
-            {remainingWords} {remainingWords === 1 ? 'word' : 'words'} remaining
-          </Text>
-        </View>
-        <GestureDetector gesture={swipe_knowledge}>
-          <Animated.View
-            style={[
-              styles.card,
-              animatedStyle,
-              currentWord?.type && { borderLeftWidth: 4, borderLeftColor: '#3B82F6' }
-            ]}
-          >
-            <TouchableOpacity
-              onPress={handleTap}
-              style={styles.cardContent}
+    <SafeAreaWrapper backgroundColor="#F8F9FA">
+      <BackButton color="black" />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={styles.content}>
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressText}>
+              {remainingWords} {remainingWords === 1 ? 'word' : 'words'} remaining
+            </Text>
+          </View>
+          <GestureDetector gesture={swipe_knowledge}>
+            <Animated.View
+              style={[
+                styles.card,
+                animatedStyle,
+                currentWord?.type && { borderLeftWidth: 4, borderLeftColor: '#3B82F6' }
+              ]}
             >
-              <View style={styles.line}>
-                <Text style={styles.wordText}>
-                  {currentWord.word}
-                </Text>
-              </View>
-              {isRevealed && (
-                <>
-                  <View style={styles.line}>
-                    <Text style={styles.translationText}>
-                      <>
-                        {wordProperties[currentWord.uuid]?.article?.value && 
-                          `${String(wordProperties[currentWord.uuid].article.value)} `
-                        }
-                        {currentWord.translation}
-                        {wordProperties[currentWord.uuid]?.gender?.value && 
-                          ` (${String(wordProperties[currentWord.uuid].gender.value)})`
-                        }
-                      </>
-                    </Text>
-                  </View>
-                  {currentWord.example && (
-                    <View style={styles.line}>
-                      <Text style={styles.exampleText}>{currentWord.example}</Text>
-                    </View>
-                  )}
-                  {wordProperties[currentWord.uuid] && (
-                    <View style={styles.propertiesContainer}>
-                      {renderProperties(wordProperties[currentWord.uuid])}
-                    </View>
-                  )}
-                  <TouchableOpacity
-                    onPress={handleEditPress}
-                    style={styles.editButtonContainer}
-                  >
-                    <IconButton
-                      icon="pencil"
-                      size={24}
-                      style={styles.editButton}
-                    />
-                  </TouchableOpacity>
-                </>
-              )}
-              {!isRevealed && (
-                <Text style={styles.tapHint}>Tap to reveal</Text>
-              )}
-              {currentWord?.type && (
-                <View style={styles.typeIndicatorContainer}>
-                  <View style={styles.typeIndicator}>
-                    <IconButton
-                      icon={getWordTypeConfig(currentWord.type)?.icon || 'help-circle'}
-                      size={24}
-                      iconColor="#3B82F6"
-                      style={styles.typeIcon}
-                    />
-                    <Text style={styles.typeText}>{getWordTypeConfig(currentWord.type)?.type || ''}</Text>
-                  </View>
+              <TouchableOpacity
+                onPress={handleTap}
+                style={styles.cardContent}
+              >
+                <View style={styles.line}>
+                  <Text style={styles.wordText}>
+                    {currentWord.word}
+                  </Text>
                 </View>
-              )}
-            </TouchableOpacity>
+                {isRevealed && (
+                  <>
+                    <View style={styles.line}>
+                      <Text style={styles.translationText}>
+                        <>
+                          {wordProperties[currentWord.uuid]?.article?.value && 
+                            `${String(wordProperties[currentWord.uuid].article.value)} `
+                          }
+                          {currentWord.translation}
+                          {wordProperties[currentWord.uuid]?.gender?.value && 
+                            ` (${String(wordProperties[currentWord.uuid].gender.value)})`
+                          }
+                        </>
+                      </Text>
+                    </View>
+                    {currentWord.example && (
+                      <View style={styles.line}>
+                        <Text style={styles.exampleText}>{currentWord.example}</Text>
+                      </View>
+                    )}
+                    {wordProperties[currentWord.uuid] && (
+                      <View style={styles.propertiesContainer}>
+                        {renderProperties(wordProperties[currentWord.uuid])}
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      onPress={handleEditPress}
+                      style={styles.editButtonContainer}
+                    >
+                      <IconButton
+                        icon="pencil"
+                        size={24}
+                        style={styles.editButton}
+                      />
+                    </TouchableOpacity>
+                  </>
+                )}
+                {!isRevealed && (
+                  <Text style={styles.tapHint}>Tap to reveal</Text>
+                )}
+                {currentWord?.type && (
+                  <View style={styles.typeIndicatorContainer}>
+                    <View style={styles.typeIndicator}>
+                      <IconButton
+                        icon={getWordTypeConfig(currentWord.type)?.icon || 'help-circle'}
+                        size={24}
+                        iconColor="#3B82F6"
+                        style={styles.typeIcon}
+                      />
+                      <Text style={styles.typeText}>{getWordTypeConfig(currentWord.type)?.type || ''}</Text>
+                    </View>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </Animated.View>
+          </GestureDetector>
+
+          <Animated.View style={[styles.checkmarkContainer, checkmarkStyle]}>
+            <MaterialIcons name="check" size={80} color="#6B7280" />
           </Animated.View>
-        </GestureDetector>
 
-        <Animated.View style={[styles.checkmarkContainer, checkmarkStyle]}>
-          <MaterialIcons name="check" size={80} color="#6B7280" />
-        </Animated.View>
+          <Animated.View style={[styles.crossContainer, crossStyle]}>
+            <MaterialIcons name="close" size={80} color="#6B7280" />
+          </Animated.View>
 
-        <Animated.View style={[styles.crossContainer, crossStyle]}>
-          <MaterialIcons name="close" size={80} color="#6B7280" />
-        </Animated.View>
-
-        <View style={styles.progressBarContainer}>
-          <View 
-            style={[
-              styles.progressBar, 
-              { 
-                width: `${((words.length - remainingWords) / words.length) * 100}%`,
-                backgroundColor: remainingWords === 0 ? '#10B981' : '#3B82F6'
-              }
-            ]} 
-          />
-          <Text style={styles.progressBarText}>
-            {words.length - remainingWords}/{words.length} words practiced
-          </Text>
+          <View style={styles.progressBarContainer}>
+            <View 
+              style={[
+                styles.progressBar, 
+                { 
+                  width: `${practiceProgress}%`,
+                  backgroundColor: remainingWords === 0 ? '#10B981' : '#3B82F6'
+                }
+              ]} 
+            />
+            <Text style={styles.progressBarText}>
+              {totalFilteredWords - remainingWords}/{totalFilteredWords} words practiced
+              {totalFilteredWords !== totalOriginalWords && totalOriginalWords > 0 && (
+                ` (out of ${totalOriginalWords} total)`
+              )}
+            </Text>
+          </View>
         </View>
-      </View>
-    </GestureHandlerRootView>
+      </GestureHandlerRootView>
+    </SafeAreaWrapper>
   );
 }
 
@@ -467,7 +537,7 @@ const styles = StyleSheet.create({
   },
   propertiesContainer: {
     marginTop: 8,
-    padding: 8,
+    margin: 8,
     backgroundColor: 'rgba(0,0,0,0.02)',
     borderRadius: 4,
   },
@@ -525,7 +595,6 @@ const styles = StyleSheet.create({
   typeIndicator: {
     flexDirection: 'column',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 12,
     paddingVertical: 4,
   },

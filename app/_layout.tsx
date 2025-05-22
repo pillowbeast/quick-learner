@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { StatusBar } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { PaperProvider, useTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from "expo-router";
 import { useFonts } from 'expo-font';
 
-import { setupDatabase } from "@/hooks/database/init";
 import { NavigationProvider } from '@/hooks/useNavigationContext';
 import { DatabaseProvider } from '@/hooks/useDatabase';
 
@@ -13,22 +12,9 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     'SpaceMono-Regular': require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
-  const [isDatabaseInitialized, setIsDatabaseInitialized] = useState(false);
   const theme = useTheme();
 
-  useEffect(() => {
-    async function initializeDatabase() {
-      try {
-        await setupDatabase();
-        setIsDatabaseInitialized(true);
-      } catch (error) {
-        console.error("Failed to initialize database:", error);
-      }
-    }
-    initializeDatabase();
-  }, []);
-
-  if (!fontsLoaded || !isDatabaseInitialized) {
+  if (!fontsLoaded) {
     return null;
   }
 
@@ -37,7 +23,7 @@ export default function RootLayout() {
       <NavigationProvider>
         <SafeAreaProvider>
           <PaperProvider theme={theme}>
-            <StatusBar barStyle="dark-content" backgroundColor="transparent" />
+            <StatusBar style="dark" translucent />
             <Stack screenOptions={{
               headerStyle: {
                 backgroundColor: theme.colors.background,

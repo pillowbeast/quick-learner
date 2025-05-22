@@ -3,7 +3,9 @@ import * as SQLite from "expo-sqlite";
 import localforage from "localforage";
 import { logger } from "@/utils/logger";
 
-let db: any = null;
+let db: SQLite.SQLiteDatabase | null = null;
+let isInitializing = false;
+let initializationPromise: Promise<void> | null = null;
 
 // Configure IndexedDB for Web
 if (Platform.OS === "web") {
@@ -18,7 +20,26 @@ export async function setupDatabase() {
     if (Platform.OS === "web") {
         logger.info("Web platform detected, using IndexedDB");
         return;
-    } else {
+    }
+
+    // If initialization is already in progress, return the existing promise
+    if (initializationPromise) {
+        return initializationPromise;
+    }
+
+    // If database is already initialized, return immediately
+    if (db) {
+        return;
+    }
+
+    // Create a new initialization promise
+    initializationPromise = (async () => {
+        if (isInitializing) {
+            logger.info("Database initialization already in progress");
+            return;
+        }
+
+        isInitializing = true;
         try {
             db = await SQLite.openDatabaseAsync("language_learning.db");
             logger.info("SQLite database opened successfully");
@@ -88,15 +109,29 @@ export async function setupDatabase() {
             logger.info("Database tables created successfully");
         } catch (error) {
             logger.error("Error setting up database:", error);
+            db = null;
             throw error;
+        } finally {
+            isInitializing = false;
+            initializationPromise = null;
         }
-    }
+    })();
+
+    return initializationPromise;
 }
 
-export function getDatabase(): any {
+export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     if (!db) {
-        logger.error("Database not initialized. Call setupDatabase() first.");
-        throw new Error("Database not initialized. Call setupDatabase() first.");
+        logger.info("Database not initialized, attempting to reconnect...");
+        try {
+            await setupDatabase();
+            if (!db) {
+                throw new Error("Database initialization failed");
+            }
+        } catch (error) {
+            logger.error("Failed to reconnect to database:", error);
+            throw new Error("Failed to reconnect to database");
+        }
     }
     return db;
 }
@@ -115,16 +150,10 @@ export async function resetDatabase() {
         try {
             if (db) {
                 await db.closeAsync();
+                db = null;
             }
-            db = await SQLite.openDatabaseAsync("language_learning.db");
-            await db.execAsync(`
-                DROP TABLE IF EXISTS language_configs;
-                DROP TABLE IF EXISTS word_properties;
-                DROP TABLE IF EXISTS words;
-                DROP TABLE IF EXISTS lists;
-                DROP TABLE IF EXISTS languages;
-            `);
-            logger.info("SQLite database tables dropped successfully");
+            await SQLite.deleteDatabaseAsync("language_learning.db");
+            logger.info("SQLite database deleted successfully");
         } catch (error) {
             logger.error("Error resetting SQLite database:", error);
             throw error;

@@ -8,6 +8,7 @@ import Flag from '@/components/Flag';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigationContext, Language } from '@/hooks/useNavigationContext';
 import i18n from '@/i18n';
+import { logger } from '@/utils/logger';
 
 export default function LanguageSelector() {
   const theme = useTheme();
@@ -28,10 +29,21 @@ export default function LanguageSelector() {
     try {
       isLoading.current = true;
       lastLoadTime.current = now;
+      
+      // Ensure database is initialized
+      if (!database.isInitialized) {
+        logger.info("Waiting for database initialization...");
+        return;
+      }
+
       const languages = await database.getAllLanguages();
       setUserLanguages(languages);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading languages:', error);
+      // If we get a database error, we might need to wait for initialization
+      if (error?.message?.includes('database')) {
+        logger.info("Database not ready, will retry on next focus");
+      }
     } finally {
       isLoading.current = false;
     }
@@ -42,7 +54,7 @@ export default function LanguageSelector() {
       if (!database.isLoading) {
         loadLanguages();
       }
-    }, [database])
+    }, [database.isLoading, database.isInitialized])
   );
 
   const handleLanguageSelect = (language: Language) => {

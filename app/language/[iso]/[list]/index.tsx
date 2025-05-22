@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { View, StyleSheet, FlatList, ScrollView, Share, Platform, Alert } from 'react-native';
 import { Text, Card, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, TextInput, Searchbar, Menu } from 'react-native-paper';
 import { useFocusEffect } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import { useNavigationHelper } from '@/hooks/useNavigation';
@@ -14,11 +15,12 @@ import { ListInfoOverlay } from '@/components/ListInfoOverlay';
 import i18n from '@/i18n';
 import { exportList, importList } from '@/hooks/database/list';
 import BackButton from '@/components/BackButton';
+import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 
 type SortOption = 'proficiency' | 'created_at' | 'abc' | 'word_type';
 type SortDirection = 'asc' | 'desc';
 
-const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown: number }) => {
+const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown: boolean | number }) => {
   const getStatusColor = () => {
     if (proficiency === 0) return '#9E9E9E'; // Gray for unanswered
     return isKnown === 1 ? '#4CAF50' : '#F44336'; // Green for correct, Red for wrong
@@ -59,15 +61,16 @@ const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown
 };
 
 export default function ListPage() {
+  const insets = useSafeAreaInsets();
   const { state } = useNavigationContext();
   const { goToAddWordType, goToSettings, goToEditWord, goBack } = useNavigationHelper();
   const database = useDatabase();
   const [showInfo, setShowInfo] = useState(false);
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
-  const [wordDetails, setWordDetails] = useState<JSX.Element | null>(null);
+  const [wordDetails, setWordDetails] = useState<ReactNode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState<SortOption>('created_at');
+  const [sortOption, setSortOption] = useState<SortOption>('proficiency');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showSortMenu, setShowSortMenu] = useState(false);
 
@@ -87,7 +90,7 @@ export default function ListPage() {
           comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           break;
         case 'abc':
-          comparison = a.word.localeCompare(b.word);
+          comparison = a.translation.localeCompare(b.translation);
           break;
         case 'word_type':
           comparison = a.type.localeCompare(b.type);
@@ -319,24 +322,28 @@ export default function ListPage() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
-      </View>
+      <SafeAreaWrapper>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
+        </View>
+      </SafeAreaWrapper>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
+      <SafeAreaWrapper>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </SafeAreaWrapper>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaWrapper excludeEdges={['bottom']}>
       <BackButton />
-      <Surface style={styles.header} elevation={1}>
+      <Surface style={styles.header} elevation={0}>
         <View style={styles.headerContent}>
           <Text variant="bodyMedium" style={styles.wordCount}>
             {words.length} {words.length === 1 ? i18n.t('word_singular') : i18n.t('word_plural')}
@@ -377,6 +384,7 @@ export default function ListPage() {
       </Surface>
       <FlatList
         style={styles.flatList}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         data={filteredWords}
         keyExtractor={(item) => item.uuid}
         ListHeaderComponent={
@@ -420,12 +428,12 @@ export default function ListPage() {
       />
       <FAB
         icon="plus"
-        style={styles.fab}
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={goToAddWordType}
       />
       <FAB
         icon="lightbulb"
-        style={[styles.fab, styles.memorizeFab]}
+        style={[styles.fab, styles.memorizeFab, { bottom: insets.bottom + 80 }]}
         onPress={goToSettings}
       />
       <ListInfoOverlay
@@ -439,7 +447,7 @@ export default function ListPage() {
           style={styles.wordDialog}
         >
           {selectedWord && (
-            <>
+            <View>
               <Dialog.Title>{selectedWord.translation}</Dialog.Title>
               <Dialog.Content>
                 <Text variant="titleMedium" style={styles.dialogWord}>{selectedWord.word}</Text>
@@ -448,7 +456,7 @@ export default function ListPage() {
               <Dialog.Actions>
                 <Button onPress={() => setSelectedWord(null)}>{i18n.t('close')}</Button>
               </Dialog.Actions>
-            </>
+            </View>
           )}
         </Dialog>
       </Portal>
@@ -508,7 +516,7 @@ export default function ListPage() {
           </Dialog.Content>
         </Dialog>
       </Portal>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 
@@ -517,7 +525,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  contentContainer: {
+    flex: 1,
+  },
   loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -525,6 +541,8 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   headerContent: {
     flexDirection: 'column',
@@ -576,7 +594,7 @@ const styles = StyleSheet.create({
     margin: 16,
   },
   flatList: {
-    marginTop: 8,
+    paddingTop: 6,
   },
   proficiencyContainer: {
     flexDirection: 'row',

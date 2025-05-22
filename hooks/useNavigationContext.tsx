@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language as DbLanguage, List as DbList } from './database/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '@/i18n';
+import { View } from 'react-native';
 
 export interface Language extends DbLanguage {
   lists?: DbList[];
@@ -82,9 +83,11 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <NavigationContext.Provider value={{ state, setCurrentLanguage, setCurrentList, setDisplayLanguage, clearState }}>
-      {children}
-    </NavigationContext.Provider>
+    <View style={{ flex: 1 }}>
+      <NavigationContext.Provider value={{ state, setCurrentLanguage, setCurrentList, setDisplayLanguage, clearState }}>
+        {children}
+      </NavigationContext.Provider>
+    </View>
   );
 }
 

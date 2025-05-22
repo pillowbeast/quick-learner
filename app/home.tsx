@@ -9,6 +9,7 @@ import DisplayLanguageSelector from "@/components/DisplayLanguageSelector";
 import { useNavigationHelper } from "@/hooks/useNavigation";
 import Flag from "@/components/Flag";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
+import SafeAreaWrapper from "@/components/SafeAreaWrapper";
 
 export default function Home() {
   const theme = useTheme();
@@ -16,7 +17,7 @@ export default function Home() {
   const { state } = useNavigationContext();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaWrapper backgroundColor={theme.colors.background}>
       <Surface style={styles.header} elevation={0}>
         <View style={styles.titleContainer}>
           <DisplayLanguageSelector />
@@ -37,7 +38,7 @@ export default function Home() {
       <View style={styles.content}>
         <LanguageSelector />
       </View>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 
@@ -47,7 +48,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 40,
   },
   titleContainer: {
     flexDirection: 'row',

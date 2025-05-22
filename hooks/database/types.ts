@@ -11,7 +11,7 @@ export interface Language {
 }
 
 export interface List {
-    uuid: string;
+    uuid: UUID;
     language_iso: string;
     name: string;
     description?: string;
@@ -25,24 +25,35 @@ export interface ListWithWords extends List {
 
 export interface Word {
     uuid: UUID;
-    listId: UUID;
+    list_id: UUID;
     word: string;
     translation: string;
+    type: string;
     example?: string;
-    type: WordType;
-    properties: Record<string, any>;
     proficiency: number;
-    lastSeen?: Date;
-    timesAnswered: number;
-    isKnown: number;
+    last_seen?: string;
+    times_answered: number;
+    isKnown: boolean;
     created_at: string;
     updated_at: string;
 }
 
 export interface WordProperty {
-    wordId: UUID;
+    word_id: UUID;
     name: string;
     value: string;
-    type: PropertyType;
+    type: string;
     created_at: string;
+}
+
+export interface ExportedList {
+    name: string;
+    description?: string;
+    language_iso: string;
+    words: {
+        word: string;
+        translation: string;
+        type: string;
+        example?: string;
+    }[];
 }

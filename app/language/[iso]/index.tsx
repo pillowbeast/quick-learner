@@ -9,6 +9,7 @@ import { useNavigationContext } from '@/hooks/useNavigationContext';
 import Flag from '@/components/Flag';
 import i18n from '@/i18n';
 import BackButton from '@/components/BackButton';
+import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 
 export default function LanguagePage() {
   const theme = useTheme();
@@ -116,7 +117,7 @@ export default function LanguagePage() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaWrapper backgroundColor={ theme.colors.background }>
       <BackButton />
       <Surface style={styles.header} elevation={0}>
         <Text variant="headlineMedium" style={styles.title}>{state.currentLanguage.name}</Text>
@@ -168,7 +169,7 @@ export default function LanguagePage() {
           {i18n.t('add_list')}
         </Button>
       </Surface>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 

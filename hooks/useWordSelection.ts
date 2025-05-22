@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Word } from './database/types';
 import { useDatabase } from './useDatabase';
 import { logger } from '@/utils/logger';
@@ -20,13 +20,15 @@ interface UseWordSelectionProps {
 interface UseWordSelectionReturn {
   currentWord: Word | null;
   remainingWords: number;
+  totalFilteredWords: number;
+  totalOriginalWords: number;
   handleSuccess: (success: boolean) => Promise<void>;
   nextWord: () => void;
 }
 
 function calculateWordScore(word: Word, useSpacedRepetition: boolean): number {
   const now = new Date();
-  const lastSeen = word.lastSeen ? new Date(word.lastSeen) : new Date(0);
+  const lastSeen = word.last_seen ? new Date(word.last_seen) : new Date(0);
   const hoursSinceLastSeen = (now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60);
   
   // Base score starts at 100
@@ -41,7 +43,7 @@ function calculateWordScore(word: Word, useSpacedRepetition: boolean): number {
   }
   
   // Reduce score based on times answered (more times = lower priority)
-  score -= word.timesAnswered * 0.5;
+  score -= word.times_answered * 0.5;
   
   // If word is marked as known, reduce its priority
   if (word.isKnown) {
@@ -53,11 +55,20 @@ function calculateWordScore(word: Word, useSpacedRepetition: boolean): number {
 
 export function useWordSelection({ words, onWordChange, settings }: UseWordSelectionProps): UseWordSelectionReturn {
   const [activeWords, setActiveWords] = useState<Word[]>([]);
+  const [totalFilteredWords, setTotalFilteredWords] = useState(0);
   const database = useDatabase();
+  const isInitialized = useRef(false);
+  
+  // Store the original word count
+  const totalOriginalWords = words.length;
 
   // Initialize active words when words array or settings change
-  useMemo(() => {
+  useEffect(() => {
+    // Skip initialization if words array is empty
     if (words.length === 0) return;
+    
+    // Skip if we've already initialized with this set of words
+    if (isInitialized.current && activeWords.length > 0) return;
     
     // Filter words based on settings
     let filteredWords = [...words];
@@ -101,9 +112,25 @@ export function useWordSelection({ words, onWordChange, settings }: UseWordSelec
         .map(sw => sw.word);
     }
     
+    // Store the total count of filtered words for progress tracking
+    setTotalFilteredWords(filteredWords.length);
     setActiveWords(filteredWords);
-    logger.debug(`Initialized ${filteredWords.length} words for practice`);
-  }, [words, settings]);
+    isInitialized.current = true;
+    logger.debug(`Initialized ${filteredWords.length} words for practice out of ${words.length} total`);
+    
+    // If there's a word change handler and we have words, call it with the first word
+    if (onWordChange && filteredWords.length > 0) {
+      onWordChange(filteredWords[0]);
+    }
+  }, [words, settings, onWordChange]);
+
+  // If words array changes to empty, reset the initialization flag
+  useEffect(() => {
+    if (words.length === 0) {
+      isInitialized.current = false;
+      setTotalFilteredWords(0);
+    }
+  }, [words]);
 
   const currentWord = activeWords[0] || null;
 
@@ -113,12 +140,12 @@ export function useWordSelection({ words, onWordChange, settings }: UseWordSelec
       const newProficiency = Math.max(0, Math.min(100, word.proficiency + proficiencyChange));
       
       logger.debug(`Updating proficiency for word ${word.word}: ${word.proficiency} -> ${newProficiency}`);
-      await database.updateWordProficiency(word.uuid, newProficiency, success ? 1 : 0);
+      await database.updateWordProficiency(word.uuid, newProficiency, success);
       
       return {
         ...word,
         proficiency: newProficiency,
-        is_known: success ? 1 : 0,
+        isKnown: success,
       };
     } catch (error) {
       logger.error('Error updating word proficiency:', error);
@@ -158,6 +185,8 @@ export function useWordSelection({ words, onWordChange, settings }: UseWordSelec
   return {
     currentWord,
     remainingWords: activeWords.length,
+    totalFilteredWords,
+    totalOriginalWords,
     handleSuccess,
     nextWord,
   };

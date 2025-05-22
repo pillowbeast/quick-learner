@@ -35,25 +35,10 @@
   - [ ] Create irregular verbs exclusion list
   - [ ] Add verb tense management
 
-- [x] List management enhancements
-  - [x] Add advanced filtering options (proficiency, date, abc, word type)
-  - [x] Implement word search functionality
-  - [x] Add list sorting capabilities
-  - [x] Create list export/import features
-
-- [x] Practice customization
-  - [x] Add word count selection
-  - [x] Implement repetition settings
-  - [x] Practice by word type
+- [] Practice customization
   - [ ] Create custom practice sessions
 
 ### Improvements
-- [ ] UI/UX Enhancements
-  - [x] Fix keyboard overlap with buttons
-  - [x] Add proper back button navigation
-  - [x] Implement color-coding/icon system for word types
-  - [ ] Use Icon for App
-
 - [ ] Learning Algorithm
   - [ ] Implement spaced repetition system
   - [ ] Add random word selection with time-based weighting
@@ -61,7 +46,4 @@
   - [ ] Add progress tracking improvements
 
 ### Bug Fixes
-- [x] Fix onboarding persistence issue
-- [x] Resolve memorize page refresh after editing
-- [x] Fix word tile edit button interaction
-- [ ] Address example text display issues
+- [ ] Known flag not displayed in word list

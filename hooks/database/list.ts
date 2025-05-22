@@ -22,14 +22,14 @@ export async function addList(language_iso: string, name: string, description?: 
     await db.runAsync(
         `INSERT INTO lists (uuid, language_iso, name, description, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [uuid, language_iso, name, description, now, now]
+        [uuid, language_iso, name, description || null, now, now]
     );
 
     return listObj;
 }
 
 export async function getList(uuid: UUID): Promise<List | null> {
-    const db = getDatabase();
+    const db = await getDatabase();
     const result = await db.getFirstAsync(
         "SELECT * FROM lists WHERE uuid = ?",
         [uuid]
@@ -38,7 +38,7 @@ export async function getList(uuid: UUID): Promise<List | null> {
 }
 
 export async function getListsByLanguage(language_iso: string): Promise<List[]> {
-    const db = getDatabase();
+    const db = await getDatabase();
     const results = await db.getAllAsync(
         "SELECT * FROM lists WHERE language_iso = ? ORDER BY name",
         [language_iso]
@@ -46,29 +46,22 @@ export async function getListsByLanguage(language_iso: string): Promise<List[]> 
     return results;
 }
 
-export async function updateList(
-    uuid: UUID,
-    name: string,
-    description?: string
-): Promise<void> {
-    const db = getDatabase();
+export async function updateList(uuid: UUID, name: string, description?: string): Promise<void> {
+    const db = await getDatabase();
     const now = new Date().toISOString();
     await db.runAsync(
         "UPDATE lists SET name = ?, description = ?, updated_at = ? WHERE uuid = ?",
-        [name, description, now, uuid]
+        [name, description || null, now, uuid]
     );
 }
 
 export async function deleteList(uuid: UUID): Promise<void> {
-    const db = getDatabase();
-    await db.runAsync(
-        "DELETE FROM lists WHERE uuid = ?",
-        [uuid]
-    );
+    const db = await getDatabase();
+    await db.runAsync("DELETE FROM lists WHERE uuid = ?", [uuid]);
 }
 
 export async function getListWithWords(uuid: UUID): Promise<ListWithWords | null> {
-    const db = getDatabase();
+    const db = await getDatabase();
     const result = await db.getFirstAsync(
         "SELECT * FROM lists WHERE uuid = ?",
         [uuid]
@@ -80,7 +73,7 @@ export async function getListWithWords(uuid: UUID): Promise<ListWithWords | null
     const words = await db.getAllAsync(
         "SELECT * FROM words WHERE list_id = ?",
         [uuid]
-    );
+    ) as ListWithWords['words'];
     return { ...list, words };
 }
 

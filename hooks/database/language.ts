@@ -28,7 +28,7 @@ export async function addLanguage(iso: string, name: string): Promise<Language> 
             throw error;
         }
     } else {
-        const db = getDatabase();
+        const db = await getDatabase();
         try {
             await db.runAsync(
                 "INSERT INTO languages (uuid, iso, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
@@ -60,7 +60,7 @@ export async function getLanguage(uuid: string): Promise<Language | null> {
             throw error;
         }
     } else {
-        const db = getDatabase();
+        const db = await getDatabase();
         try {
             const result = await db.getFirstAsync(
                 "SELECT * FROM languages WHERE uuid = ?",
@@ -94,7 +94,7 @@ export async function getAllLanguages(): Promise<Language[]> {
             throw error;
         }
     } else {
-        const db = getDatabase();
+        const db = await getDatabase();
         try {
             const result = await db.getAllAsync("SELECT * FROM languages");
             logger.debug(`Found ${result.length} languages`);
@@ -126,7 +126,7 @@ export async function updateLanguage(uuid: string, name: string): Promise<void> 
             throw error;
         }
     } else {
-        const db = getDatabase();
+        const db = await getDatabase();
         try {
             await db.runAsync(
                 "UPDATE languages SET name = ?, updated_at = ? WHERE uuid = ?",
@@ -151,7 +151,7 @@ export async function deleteLanguage(uuid: string): Promise<void> {
             throw error;
         }
     } else {
-        const db = getDatabase();
+        const db = await getDatabase();
         try {
             await db.runAsync("DELETE FROM languages WHERE uuid = ?", [uuid]);
             logger.info(`Language deleted successfully: ${uuid}`);

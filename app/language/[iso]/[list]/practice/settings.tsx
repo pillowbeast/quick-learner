@@ -79,7 +79,7 @@ export default function PracticeSettings() {
               value={20}
               onValueChange={handleWordCountChange}
               minimumValue={5}
-              maximumValue={Math.max(50, availableWords)}
+              maximumValue={Math.min(50, availableWords)}
               step={1}
               minimumTrackTintColor="#3B82F6"
               maximumTrackTintColor="#E5E7EB"
