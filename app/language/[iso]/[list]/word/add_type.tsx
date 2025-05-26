@@ -5,6 +5,7 @@ import { Text, Surface, IconButton } from 'react-native-paper';
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { languageConfigs } from '@/types/languages';
+import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 import i18n from '@/i18n';
 
 export default function AddWordTypePage() {
@@ -17,7 +18,7 @@ export default function AddWordTypePage() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaWrapper>
       <Surface style={styles.header} elevation={1}>
         <Text variant="headlineSmall" style={styles.title}>
           {i18n.t('select_word_type')}
@@ -48,7 +49,7 @@ export default function AddWordTypePage() {
           </Surface>
         ))}
       </ScrollView>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 

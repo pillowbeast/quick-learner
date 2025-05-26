@@ -1,22 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { SegmentedButtons, Switch, Button, IconButton } from 'react-native-paper';
+import { Switch, Button, IconButton } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import { WordType } from '@/types/word';
 import { languageConfigs } from '@/types/languages';
 import { useDatabase } from '@/hooks/useDatabase';
+import SafeAreaWrapper from '@/components/SafeAreaWrapper';
+import { PracticeSettings } from '@/types/practice';
 
-interface PracticeSettings {
-  wordCount: number;
-  proficiencyMode: 'all' | 'unknown' | 'known';
-  wordTypes: WordType[];
-  useSpacedRepetition: boolean;
-  targetProficiency: number;
-}
-
-export default function PracticeSettings() {
+export default function PracticeSettingsPage() {
   const { goToMemorize } = useNavigationHelper();
   const { state } = useNavigationContext();
   const database = useDatabase();
@@ -25,7 +19,6 @@ export default function PracticeSettings() {
   const [availableWords, setAvailableWords] = useState<number>(0);
   const [settings, setSettings] = useState<PracticeSettings>({
     wordCount: 20,
-    proficiencyMode: 'all',
     wordTypes: config.wordTypes.map(wt => wt.type),
     useSpacedRepetition: true,
     targetProficiency: 50,
@@ -37,7 +30,7 @@ export default function PracticeSettings() {
       
       const words = await database.getWordsByList(state.currentList.uuid);
       const filteredWords = words.filter(word => 
-        settings.wordTypes.includes(word.type)
+        word.type && settings.wordTypes.includes(word.type as WordType)
       );
       setAvailableWords(filteredWords.length);
     };
@@ -70,107 +63,96 @@ export default function PracticeSettings() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Word Count</Text>
-          <View style={styles.sliderContainer}>
-            <Slider
-              value={20}
-              onValueChange={handleWordCountChange}
-              minimumValue={5}
-              maximumValue={Math.min(50, Math.max(50, availableWords))}
-              step={1}
-              minimumTrackTintColor="#3B82F6"
-              maximumTrackTintColor="#E5E7EB"
-              thumbTintColor="#3B82F6"
-            />
-            <Text style={styles.sliderValue}>{settings.wordCount} words</Text>
-            <Text style={styles.availableWords}>Available: {Math.min(50, Math.max(50, availableWords))} words</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Target Proficiency</Text>
-          <View style={styles.sliderContainer}>
-            <Slider
-              value={50}
-              onValueChange={handleProficiencyChange}
-              minimumValue={0}
-              maximumValue={100}
-              step={1}
-              minimumTrackTintColor="#3B82F6"
-              maximumTrackTintColor="#E5E7EB"
-              thumbTintColor="#3B82F6"
-            />
-            <Text style={styles.sliderValue}>{settings.targetProficiency}%</Text>
-            <Text style={styles.availableWords}>Target mean proficiency level</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Proficiency Mode</Text>
-          <SegmentedButtons
-            value={settings.proficiencyMode}
-            onValueChange={(value) => setSettings(prev => ({ ...prev, proficiencyMode: value as 'all' | 'unknown' | 'known' }))}
-            buttons={[
-              { value: 'all', label: 'All Words' },
-              { value: 'unknown', label: 'Unknown' },
-              { value: 'known', label: 'Known' },
-            ]}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Word Types</Text>
-          {config.wordTypes.map((type) => (
-            <View key={type.type} style={styles.wordTypeRow}>
-              <Switch
-                value={settings.wordTypes.includes(type.type)}
-                onValueChange={(value) => {
-                  setSettings(prev => ({
-                    ...prev,
-                    wordTypes: value
-                      ? [...prev.wordTypes, type.type]
-                      : prev.wordTypes.filter(t => t !== type.type)
-                  }));
-                }}
+    <SafeAreaWrapper backgroundColor="#F8F9FA">
+      <View style={styles.container}>
+        <ScrollView style={styles.content}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Word Count</Text>
+            <View style={styles.sliderContainer}>
+              <Slider
+                value={20}
+                onValueChange={handleWordCountChange}
+                minimumValue={5}
+                maximumValue={Math.min(50, Math.max(50, availableWords))}
+                step={1}
+                minimumTrackTintColor="#3B82F6"
+                maximumTrackTintColor="#E5E7EB"
+                thumbTintColor="#3B82F6"
               />
-              <IconButton
-                icon={type.icon}
-                size={24}
-                onPress={() => {}}
-                style={styles.wordTypeIcon}
-              />
-              <Text style={styles.wordTypeLabel}>
-                {type.type}
-              </Text>
+              <Text style={styles.sliderValue}>{settings.wordCount} words</Text>
+              <Text style={styles.availableWords}>Available: {Math.min(50, Math.max(50, availableWords))} words</Text>
             </View>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Spaced Repetition</Text>
-          <View style={styles.switchRow}>
-            <Switch
-              value={settings.useSpacedRepetition}
-              onValueChange={(value) => setSettings(prev => ({ ...prev, useSpacedRepetition: value }))}
-            />
-            <Text style={styles.switchLabel}>Use spaced repetition</Text>
           </View>
-        </View>
-      </ScrollView>
 
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleStartPractice}
-          style={styles.startButton}
-        >
-          Start Practice
-        </Button>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Target Proficiency</Text>
+            <View style={styles.sliderContainer}>
+              <Slider
+                value={50}
+                onValueChange={handleProficiencyChange}
+                minimumValue={0}
+                maximumValue={100}
+                step={1}
+                minimumTrackTintColor="#3B82F6"
+                maximumTrackTintColor="#E5E7EB"
+                thumbTintColor="#3B82F6"
+              />
+              <Text style={styles.sliderValue}>{settings.targetProficiency}%</Text>
+              <Text style={styles.availableWords}>Target mean proficiency level</Text>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Word Types</Text>
+            {config.wordTypes.map((type) => (
+              <View key={type.type} style={styles.wordTypeRow}>
+                <Switch
+                  value={settings.wordTypes.includes(type.type)}
+                  onValueChange={(value) => {
+                    setSettings(prev => ({
+                      ...prev,
+                      wordTypes: value
+                        ? [...prev.wordTypes, type.type]
+                        : prev.wordTypes.filter(t => t !== type.type)
+                    }));
+                  }}
+                />
+                <IconButton
+                  icon={type.icon}
+                  size={24}
+                  onPress={() => {}}
+                  style={styles.wordTypeIcon}
+                />
+                <Text style={styles.wordTypeLabel}>
+                  {type.type}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Spaced Repetition</Text>
+            <View style={styles.switchRow}>
+              <Switch
+                value={settings.useSpacedRepetition}
+                onValueChange={(value) => setSettings(prev => ({ ...prev, useSpacedRepetition: value }))}
+              />
+              <Text style={styles.switchLabel}>Use spaced repetition</Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Button
+            mode="contained"
+            onPress={handleStartPractice}
+            style={styles.startButton}
+          >
+            Start Practice
+          </Button>
+        </View>
       </View>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 

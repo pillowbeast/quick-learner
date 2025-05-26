@@ -9,6 +9,7 @@ import { WordType } from '@/types/word';
 import { languageConfigs } from '@/types/languages';
 import { useDatabase } from '@/hooks/useDatabase.tsx';
 import WordForm from '@/components/WordForm';
+import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 import i18n from '@/i18n';
 
 export default function WordDetailsPage() {
@@ -115,12 +116,14 @@ export default function WordDetailsPage() {
   }
 
   return (
-    <WordForm
-      type={type}
-      config={config}
-      onSubmit={handleSubmit}
-      submitButtonText={i18n.t('add_word')}
-    />
+    <SafeAreaWrapper>
+      <WordForm
+        type={type}
+        config={config}
+        onSubmit={handleSubmit}
+        submitButtonText={i18n.t('add_word')}
+      />
+    </SafeAreaWrapper>
   );
 }
 

@@ -13,7 +13,7 @@ import SafeAreaWrapper from "@/components/SafeAreaWrapper";
 
 export default function Home() {
   const theme = useTheme();
-  const { goOnboarding } = useNavigationHelper();
+  const { goOnboarding, goToSettings } = useNavigationHelper();
   const { state } = useNavigationContext();
 
   return (
@@ -24,6 +24,12 @@ export default function Home() {
 
           <Text variant="headlineMedium" style={styles.title}>{i18n.t('app_name')}</Text>
           <View style={styles.headerActions}>
+            <IconButton
+              icon="cog"
+              size={24}
+              onPress={goToSettings}
+              style={styles.helpButton}
+            />
             <IconButton
               icon="help-circle"
               size={24}

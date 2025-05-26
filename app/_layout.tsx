@@ -4,6 +4,7 @@ import { PaperProvider, useTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from "expo-router";
 import { useFonts } from 'expo-font';
+import { useColorScheme } from 'react-native';
 
 import { NavigationProvider } from '@/hooks/useNavigationContext';
 import { DatabaseProvider } from '@/hooks/useDatabase';
@@ -13,6 +14,7 @@ export default function RootLayout() {
     'SpaceMono-Regular': require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
   const theme = useTheme();
+  const colorScheme = useColorScheme();
 
   if (!fontsLoaded) {
     return null;
@@ -26,9 +28,9 @@ export default function RootLayout() {
             <StatusBar style="dark" translucent />
             <Stack screenOptions={{
               headerStyle: {
-                backgroundColor: theme.colors.background,
+                backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
               },
-              headerTintColor: theme.colors.onBackground,
+              headerTintColor: colorScheme === 'dark' ? '#fff' : '#000',
               headerTitleStyle: {
                 fontWeight: 'bold',
               },
@@ -44,6 +46,12 @@ export default function RootLayout() {
               <Stack.Screen name="language/[iso]/[list]/practice/study" />
               <Stack.Screen name="language/[iso]/[list]/practice/memorize" />
               <Stack.Screen name="add_lang" />
+              <Stack.Screen
+                name="settings"
+                options={{
+                  title: 'Settings',
+                }}
+              />
             </Stack>
           </PaperProvider>
         </SafeAreaProvider>

@@ -42,6 +42,15 @@ export function useNavigationHelper() {
                 params
             } as any);
         },
+        goToSentences: (wordUuids: string[]) => {
+            if (!state.currentLanguage?.iso || !state.currentList?.name) {
+                throw new Error("Language and list must be set before navigating to sentences");
+            }
+            router.push({
+                pathname: `/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/sentences`,
+                params: { words: JSON.stringify(wordUuids) }
+            } as any);
+        },
         goToAddWordType: () => {
             if (!state.currentLanguage?.iso || !state.currentList?.name) {
                 throw new Error("Language and list must be set before navigating to add word");
@@ -65,11 +74,14 @@ export function useNavigationHelper() {
                 pathname: `/language/${state.currentLanguage.iso}/${state.currentList.name}/word/${uuid}`,
             } as any);
         },
-        goToSettings: () => {
+        goToPracticeSettings: () => {
             if (!state.currentLanguage?.iso || !state.currentList?.name) {
-                throw new Error("Language and list must be set before navigating to settings");
+                throw new Error("Language and list must be set before navigating to practice settings");
             }
             router.push(`/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/settings`);
+        },
+        goToSettings: () => {
+            router.push("settings" as any);
         },
         getCurrentLanguage: () => state.currentLanguage,
         getCurrentList: () => state.currentList,

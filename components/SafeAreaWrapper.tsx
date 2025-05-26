@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SafeAreaWrapperProps {
   children: ReactNode;
@@ -15,14 +15,14 @@ interface SafeAreaWrapperProps {
  * A wrapper component that provides safe area insets for content
  * to avoid notches, cameras, home indicators, etc.
  */
-export function SafeAreaWrapper({
+const SafeAreaWrapper: React.FC<SafeAreaWrapperProps> = ({
   children,
   style,
   contentStyle,
   backgroundColor = '#fff',
   edges = ['top', 'right', 'bottom', 'left'],
   excludeEdges = [],
-}: SafeAreaWrapperProps) {
+}) => {
   const insets = useSafeAreaInsets();
   
   // Filter out excluded edges
@@ -51,7 +51,7 @@ export function SafeAreaWrapper({
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -46,7 +46,8 @@
       },
       "eas": {
         "projectId": "05beb23c-36b6-4b3b-bbe4-61b1388e1072"
-      }
+      },
+      "sentencePractice": true
     }
   }
 }

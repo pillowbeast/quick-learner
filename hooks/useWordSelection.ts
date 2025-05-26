@@ -2,14 +2,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { Word } from './database/types';
 import { useDatabase } from './useDatabase';
 import { logger } from '@/utils/logger';
-
-interface PracticeSettings {
-  wordCount: number;
-  proficiencyMode: 'all' | 'unknown' | 'known';
-  wordTypes: string[];
-  useSpacedRepetition: boolean;
-  targetProficiency: number;
-}
+import { PracticeSettings } from '@/types/practice';
+import { WordType } from '@/types/word';
 
 interface UseWordSelectionProps {
   words: Word[];
@@ -45,11 +39,6 @@ function calculateWordScore(word: Word, useSpacedRepetition: boolean): number {
   // Reduce score based on times answered (more times = lower priority)
   score -= word.times_answered * 0.5;
   
-  // If word is marked as known, reduce its priority
-  if (word.isKnown) {
-    score -= 50;
-  }
-  
   return Math.max(0, score);
 }
 
@@ -74,17 +63,10 @@ export function useWordSelection({ words, onWordChange, settings }: UseWordSelec
     let filteredWords = [...words];
     
     if (settings) {
-      // Filter by proficiency mode
-      if (settings.proficiencyMode === 'known') {
-        filteredWords = filteredWords.filter(word => word.isKnown);
-      } else if (settings.proficiencyMode === 'unknown') {
-        filteredWords = filteredWords.filter(word => !word.isKnown);
-      }
-      
       // Filter by word types
       if (settings.wordTypes.length > 0) {
         filteredWords = filteredWords.filter(word => 
-          word.type && settings.wordTypes.includes(word.type)
+          word.type && settings.wordTypes.includes(word.type as WordType)
         );
       }
 

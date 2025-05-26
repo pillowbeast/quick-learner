@@ -57,3 +57,11 @@ export interface ExportedList {
         example?: string;
     }[];
 }
+
+export interface SentenceData {
+    word: Word;
+    wordText: string;
+    translation: string;
+    isLoading: boolean;
+    error: string | null;
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { View, StyleSheet, FlatList, ScrollView, Share, Platform, Alert } from 'react-native';
 import { Text, Card, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, TextInput, Searchbar, Menu } from 'react-native-paper';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
@@ -20,10 +20,10 @@ import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 type SortOption = 'proficiency' | 'created_at' | 'abc' | 'word_type';
 type SortDirection = 'asc' | 'desc';
 
-const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown: boolean | number }) => {
+const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown: boolean }) => {
   const getStatusColor = () => {
     if (proficiency === 0) return '#9E9E9E'; // Gray for unanswered
-    return isKnown === 1 ? '#4CAF50' : '#F44336'; // Green for correct, Red for wrong
+    return isKnown === true ? '#4CAF50' : '#F44336'; // Green for correct, Red for wrong
   };
 
   const getBarColor = () => {
@@ -63,7 +63,7 @@ const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown
 export default function ListPage() {
   const insets = useSafeAreaInsets();
   const { state } = useNavigationContext();
-  const { goToAddWordType, goToSettings, goToEditWord, goBack } = useNavigationHelper();
+  const { goToAddWordType, goToPracticeSettings, goToEditWord, goBack, goToSentences } = useNavigationHelper();
   const database = useDatabase();
   const [showInfo, setShowInfo] = useState(false);
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
@@ -77,6 +77,9 @@ export default function ListPage() {
   const [words, setWords] = useState<Word[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [selectedWords, setSelectedWords] = useState<Word[]>([]);
+  const [selectMode, setSelectMode] = useState(false);
 
   const sortWords = (words: Word[]) => {
     return [...words].sort((a, b) => {
@@ -320,6 +323,37 @@ export default function ListPage() {
     }
   }, [selectedWord]);
 
+  const handlePracticeSentences = () => {
+    if (selectedWords.length === 0) {
+      Alert.alert(
+        i18n.t('practice_sentences'),
+        i18n.t('select_words_for_practice'),
+        [
+          {
+            text: i18n.t('cancel'),
+            style: 'cancel',
+          },
+          {
+            text: i18n.t('select'),
+            onPress: () => setSelectMode(true),
+          }
+        ]
+      );
+      return;
+    }
+
+    // Navigate to practice screen with selected words
+    goToSentences(selectedWords.map(w => w.uuid));
+  };
+
+  const toggleWordSelection = (word: Word) => {
+    if (selectedWords.some(w => w.uuid === word.uuid)) {
+      setSelectedWords(selectedWords.filter(w => w.uuid !== word.uuid));
+    } else {
+      setSelectedWords([...selectedWords, word]);
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaWrapper>
@@ -347,38 +381,61 @@ export default function ListPage() {
         <View style={styles.headerContent}>
           <Text variant="bodyMedium" style={styles.wordCount}>
             {words.length} {words.length === 1 ? i18n.t('word_singular') : i18n.t('word_plural')}
+            {selectMode && selectedWords.length > 0 && ` (${selectedWords.length} ${i18n.t('selected')})`}
           </Text>
           <Text variant="headlineSmall" style={styles.listName}>
             {state.currentList?.name}
           </Text>
           <View style={styles.headerActions}>
-            <IconButton
-              icon="help-circle"
-              size={24}
-              onPress={() => setShowInfo(true)}
-            />
-            <IconButton
-              icon="export"
-              size={24}
-              onPress={handleExport}
-            />
-            <IconButton
-              icon="import"
-              size={24}
-              onPress={handleImport}
-            />
-            <IconButton
-              icon="sort"
-              size={24}
-              style={{marginRight: -6}}
-              onPress={() => setShowSortMenu(true)}
-            />
-            <IconButton
-              style={{marginLeft: -6}}
-              icon={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-              size={24}
-              onPress={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-            />
+            {selectMode ? (
+              <>
+                <Button 
+                  mode="contained" 
+                  onPress={handlePracticeSentences}
+                  style={styles.practiceButton}
+                >
+                  {i18n.t('practice_selected')}
+                </Button>
+                <Button 
+                  onPress={() => {
+                    setSelectMode(false);
+                    setSelectedWords([]);
+                  }}
+                >
+                  {i18n.t('cancel')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <IconButton
+                  icon="help-circle"
+                  size={24}
+                  onPress={() => setShowInfo(true)}
+                />
+                <IconButton
+                  icon="export"
+                  size={24}
+                  onPress={handleExport}
+                />
+                <IconButton
+                  icon="import"
+                  size={24}
+                  onPress={handleImport}
+                />
+                <IconButton
+                  icon="sort"
+                  size={24}
+                  style={{marginRight: -6}}
+                  onPress={() => setShowSortMenu(true)}
+                />
+                <IconButton
+                  style={{marginLeft: -6}}
+                  icon={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
+                  size={24}
+                  onPress={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                />
+              </>
+            )}
           </View>
         </View>
       </Surface>
@@ -397,8 +454,11 @@ export default function ListPage() {
         }
         renderItem={({ item }) => (
           <Card 
-            style={styles.card}
-            onPress={() => setSelectedWord(item)}
+            style={[
+              styles.card,
+              selectMode && selectedWords.some(w => w.uuid === item.uuid) && styles.selectedCard
+            ]}
+            onPress={() => selectMode ? toggleWordSelection(item) : setSelectedWord(item)}
           >
             <Card.Content style={styles.cardContent}>
               <View style={styles.cardTextContainer}>
@@ -406,22 +466,24 @@ export default function ListPage() {
                 <Text variant="bodyMedium">{item.word}</Text>
                 <ProficiencyBar proficiency={item.proficiency} isKnown={item.isKnown} />
               </View>
-              <View style={styles.cardActions}>
-                <IconButton
-                  icon="pencil"
-                  size={24}
-                  onPress={() => {
-                    goToEditWord(item.uuid);
-                  }}
-                  style={styles.editButton}
-                />
-                <IconButton
-                  icon="delete"
-                  size={24}
-                  onPress={() => handleDeleteWord(item)}
-                  style={styles.deleteButton}
-                />
-              </View>
+              {!selectMode && (
+                <View style={styles.cardActions}>
+                  <IconButton
+                    icon="pencil"
+                    size={24}
+                    onPress={() => {
+                      goToEditWord(item.uuid);
+                    }}
+                    style={styles.editButton}
+                  />
+                  <IconButton
+                    icon="delete"
+                    size={24}
+                    onPress={() => handleDeleteWord(item)}
+                    style={styles.deleteButton}
+                  />
+                </View>
+              )}
             </Card.Content>
           </Card>
         )}
@@ -434,7 +496,12 @@ export default function ListPage() {
       <FAB
         icon="lightbulb"
         style={[styles.fab, styles.memorizeFab, { bottom: insets.bottom + 80 }]}
-        onPress={goToSettings}
+        onPress={goToPracticeSettings}
+      />
+      <FAB
+        icon="translate"
+        style={[styles.fab, styles.practiceFab, { bottom: insets.bottom + 144 }]}
+        onPress={() => setSelectMode(!selectMode)}
       />
       <ListInfoOverlay
         visible={showInfo}
@@ -564,7 +631,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 8,
   },
   cardTextContainer: {
     flex: 1,
@@ -623,6 +689,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    height: 40,
   },
   importInput: {
     marginTop: 16,
@@ -663,5 +730,14 @@ const styles = StyleSheet.create({
   },
   sortButton: {
     justifyContent: 'flex-start',
+  },
+  practiceFab: {
+    bottom: 144,
+  },
+  selectedCard: {
+    backgroundColor: '#E0E0E0',
+  },
+  practiceButton: {
+    marginRight: 8,
   },
 });
