@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/button';
 import * as SecureStore from 'expo-secure-store';
 import { useNavigationHelper } from '@/hooks/useNavigation';
-import BackButton from '@/components/BackButton';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 
 const API_KEY_STORAGE_KEY = 'openai_api_key';
@@ -93,7 +92,6 @@ export default function SettingsScreen() {
   if (isLoading) {
     return (
       <SafeAreaWrapper>
-        <BackButton />
         <View style={styles.container}>
           <ActivityIndicator size="large" />
         </View>
@@ -103,7 +101,6 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaWrapper>
-      <BackButton />
       <View style={styles.container}>
         <Text style={styles.title}>Settings</Text>
         

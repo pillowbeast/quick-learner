@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, View, StyleSheet, Alert } from 'react-native';
-import { Text, Surface, TextInput, Button, ActivityIndicator, IconButton } from 'react-native-paper';
-import { useTheme } from 'react-native-paper';
+import { ScrollView, View, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
+import { Text, Surface, Button, ActivityIndicator, IconButton } from 'react-native-paper';
+import React from 'react';
+import { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable'; 
 
 import { useDatabase } from '@/hooks/useDatabase';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useNavigationContext } from '@/hooks/useNavigationContext';
-import Flag from '@/components/Flag';
+
 import i18n from '@/i18n';
-import BackButton from '@/components/BackButton';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
+import UnifiedHeader from "@/components/UnifiedHeader";
+import UnifiedFooter from "@/components/UnifiedFooter";
+import { entryStyles } from "@/styles/entryStyles";
+import SwipeableListCard from "@/components/SwipeableListCard";
 
 export default function LanguagePage() {
-  const theme = useTheme();
   const { state, setCurrentList, setCurrentLanguage } = useNavigationContext();
   const { goToList } = useNavigationHelper();
   const database = useDatabase();
@@ -35,33 +38,67 @@ export default function LanguagePage() {
         setIsLoading(false);
       }
     };
-    loadLists();
-  }, [state.currentLanguage?.uuid]);
+    // Ensure database is ready before loading lists
+    if (!database.isLoading && database.isInitialized) {
+        loadLists();
+    }
+  }, [state.currentLanguage?.uuid, database.isLoading, database.isInitialized]);
+
+  const addListLogic = async (name: string) => {
+    if (name && name.trim() && state.currentLanguage) {
+      try {
+        setIsLoading(true);
+        const result = await database.addList(state.currentLanguage.iso, name.trim());
+        if (result && state.currentLanguage.lists) {
+          setCurrentLanguage({
+            ...state.currentLanguage,
+            lists: [...state.currentLanguage.lists, result]
+          });
+          setNewListName("");
+        }
+      } catch (error) {
+        console.error('Error adding list:', error);
+        Alert.alert(i18n.t('Error'), i18n.t('failed_to_add_list'));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleEditList = (list: typeof state.currentList) => {
+    console.log("Edit list:", list?.name);
+    Alert.alert("Edit List", `Rename: ${list?.name}? (Not implemented yet)`);
+  };
 
   const handleAddList = async () => {
-    if (!newListName.trim() || !state.currentLanguage) return;
-    
-    try {
-      setIsLoading(true);
-      const result = await database.addList(state.currentLanguage.iso, newListName);
-      if (result && state.currentLanguage.lists) {
-        setCurrentLanguage({
-          ...state.currentLanguage,
-          lists: [...state.currentLanguage.lists, result]
-        });
-        setNewListName("");
+    if (Platform.OS !== 'web') {
+      Alert.prompt(
+        i18n.t('add_list'),
+        i18n.t('enter_list_name'),
+        [
+          { text: i18n.t('cancel'), style: 'cancel' },
+          { text: i18n.t('add'), onPress: (name) => addListLogic(name || "") }
+        ],
+        'plain-text',
+        newListName
+      );
+    } else {
+      const nameFromPrompt = prompt(i18n.t('enter_list_name'), newListName);
+      if (nameFromPrompt !== null) {
+        addListLogic(nameFromPrompt);
       }
-    } catch (error) {
-      console.error('Error adding list:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleListSelect = (list: typeof state.currentList) => {
     if (!list) return;
     setCurrentList(list);
-    goToList(state.currentLanguage!, list);
+    if (state.currentLanguage) {
+        goToList(state.currentLanguage, list);
+    } else {
+        console.error("Current language not set, cannot navigate to list");
+        // Optionally, show an alert to the user
+    }
   };
 
   const handleDeleteList = async (list: typeof state.currentList) => {
@@ -104,112 +141,97 @@ export default function LanguagePage() {
   };
 
   if (!state.currentLanguage) {
-    return null;
+    return (
+        <SafeAreaWrapper>
+            <View style={styles.loadingContainer}>
+                <Text>Error: No language selected.</Text>
+            </View>
+        </SafeAreaWrapper>
+    );
   }
 
-  if (isLoading) {
+  // Loading Screen
+  if (isLoading && (!state.currentLanguage.lists || state.currentLanguage.lists.length === 0)) { 
     return (
-      <View style={[styles.container, styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>{i18n.t('loading_lists')}</Text>
-      </View>
+      <SafeAreaWrapper>
+        <UnifiedHeader 
+          title={state.currentLanguage.name}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
+          <Text style={styles.loadingText}>{i18n.t('loading_lists')}</Text>
+        </View>
+      </SafeAreaWrapper>
     );
   }
 
   return (
-    <SafeAreaWrapper backgroundColor={ theme.colors.background }>
-      <BackButton />
-      <Surface style={styles.header} elevation={0}>
-        <Text variant="headlineMedium" style={styles.title}>{state.currentLanguage.name}</Text>
-        <Flag iso={state.currentLanguage.iso} />
-      </Surface>
+    <SafeAreaWrapper>
+      <UnifiedHeader 
+        title={state.currentLanguage.name}
+      />
+      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContentContainer}>
+        {state.currentLanguage.lists?.map((list) => {
+          const listSwipeableRef = React.createRef<SwipeableMethods>();
 
-      <ScrollView style={styles.content}>
-        {state.currentLanguage.lists?.map((list) => (
+          return (
+            <SwipeableListCard
+              key={list.uuid}
+              swipeableRef={listSwipeableRef}
+              onSwipeLeft={() => handleEditList(list)}
+              onSwipeRight={() => handleDeleteList(list)}
+            >
+              <Surface 
+                style={entryStyles.card} 
+                elevation={1}
+              >
+                <TouchableOpacity onPress={() => handleListSelect(list)} style={{width: '100%'}}>
+                    <View style={entryStyles.cardContent}>
+                      <View style={entryStyles.infoContainer}>
+                          <View style={entryStyles.textContainer}>
+                          <Text style={entryStyles.title}>{list.name}</Text>
+                          {list.description && <Text style={entryStyles.subtitle}>{list.description}</Text>}
+                          </View>
+                      </View>
+                      <View style={entryStyles.actionsContainer}>
+                          <Button
+                          mode="contained"
+                          onPress={() => handleListSelect(list)}
+                          style={entryStyles.actionButton}
+                          labelStyle={{textTransform: 'uppercase'}}
+                          >
+                          {i18n.t('open')}
+                          </Button>
+                      </View>
+                    </View>
+                </TouchableOpacity>
+              </Surface>
+            </SwipeableListCard>
+          );
+        })}
+        <TouchableOpacity onPress={handleAddList} disabled={isLoading}>
           <Surface 
-            key={list.uuid} 
-            style={[styles.card, { backgroundColor: theme.colors.surface }]} 
+            style={entryStyles.card} 
             elevation={1}
           >
-            <View style={styles.cardContent}>
-              <Text style={styles.listName}>{list.name}</Text>
-              <View style={styles.cardActions}>
-                <Button
-                  mode="contained"
-                  onPress={() => handleListSelect(list)}
-                  style={styles.viewButton}
-                >
-                  {i18n.t('view')}
-                </Button>
-                <IconButton
-                  icon="delete"
-                  size={24}
-                  onPress={() => handleDeleteList(list)}
-                  style={styles.deleteButton}
-                />
-              </View>
-            </View>
+            <IconButton icon="plus" size={24} />
+            <Text style={entryStyles.addButtonText}>
+              {i18n.t('add_list')}
+            </Text>
           </Surface>
-        ))}
+        </TouchableOpacity>
       </ScrollView>
-
-      <Surface style={styles.footer} elevation={2}>
-        <TextInput
-          placeholder={i18n.t('enter_list_name')}
-          value={newListName}
-          onChangeText={setNewListName}
-          style={styles.input}
-          onSubmitEditing={handleAddList}
-        />
-        <Button
-          mode="contained"
-          onPress={handleAddList}
-          disabled={!newListName.trim()}
-        >
-          {i18n.t('add_list')}
-        </Button>
-      </Surface>
+      <UnifiedFooter />
     </SafeAreaWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 40,
-    alignItems: 'center',
-  },
-  title: {
-    fontWeight: 'bold',
-    marginBottom: 8,
+  scrollContentContainer: {
+    paddingVertical: 8,
   },
   content: {
     flex: 1,
-    padding: 16,
-  },
-  card: {
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 16,
-  },
-  cardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  listName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-  },
-  input: {
-    marginBottom: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -218,15 +240,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  viewButton: {
-    marginRight: 8,
-  },
-  deleteButton: {
-    margin: 0,
+    fontSize: 16,
+    color: '#666',
   },
 });

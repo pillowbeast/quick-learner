@@ -1,67 +1,33 @@
-import React, { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { View, StyleSheet, FlatList, ScrollView, Share, Platform, Alert } from 'react-native';
-import { Text, Card, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, TextInput, Searchbar, Menu } from 'react-native-paper';
+import React, { useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
+import { View, StyleSheet, FlatList, Share, Platform, Alert, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, Card, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, TextInput, Searchbar, Menu, useTheme } from 'react-native-paper';
 import { useFocusEffect, router } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import { Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useDatabase } from '@/hooks/useDatabase.tsx';
 import { Word } from '@/hooks/database/types';
-import { ListInfoOverlay } from '@/components/ListInfoOverlay';
-import i18n from '@/i18n';
 import { exportList, importList } from '@/hooks/database/list';
-import BackButton from '@/components/BackButton';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
+import { ListInfoOverlay } from '@/components/ListInfoOverlay';
+import UnifiedHeader from "@/components/UnifiedHeader";
+import UnifiedFooter from "@/components/UnifiedFooter";
+import { entryStyles } from "@/styles/entryStyles";
+import ProficiencyBar from "@/components/ProficiencyBar";
+import SwipeableWordCard from "@/components/SwipeableWordCard";
+import i18n from '@/i18n';
 
 type SortOption = 'proficiency' | 'created_at' | 'abc' | 'word_type';
 type SortDirection = 'asc' | 'desc';
 
-const ProficiencyBar = ({ proficiency, isKnown }: { proficiency: number; isKnown: boolean }) => {
-  const getStatusColor = () => {
-    if (proficiency === 0) return '#9E9E9E'; // Gray for unanswered
-    return isKnown === true ? '#4CAF50' : '#F44336'; // Green for correct, Red for wrong
-  };
-
-  const getBarColor = () => {
-    // Convert proficiency to a value between 0 and 1
-    const progress = proficiency / 100;
-    
-    if (progress < 0.5) {
-      // Transition from red to gray (0% to 50%)
-      const redToGray = progress * 2; // Scale to 0-1 range
-      const red = Math.floor(244 * (1 - redToGray) + 158 * redToGray);
-      const green = Math.floor(67 * (1 - redToGray) + 158 * redToGray);
-      const blue = Math.floor(54 * (1 - redToGray) + 158 * redToGray);
-      return `rgb(${red}, ${green}, ${blue})`;
-    } else {
-      // Transition from gray to green (50% to 100%)
-      const grayToGreen = (progress - 0.5) * 2; // Scale to 0-1 range
-      const red = Math.floor(158 * (1 - grayToGreen) + 76 * grayToGreen);
-      const green = Math.floor(158 * (1 - grayToGreen) + 175 * grayToGreen);
-      const blue = Math.floor(158 * (1 - grayToGreen) + 80 * grayToGreen);
-      return `rgb(${red}, ${green}, ${blue})`;
-    }
-  };
-
-  return (
-    <View style={styles.proficiencyContainer}>
-      <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
-      <View style={styles.proficiencyBarContainer}>
-        <View style={[styles.proficiencyBar, { 
-          width: `${proficiency}%`,
-          backgroundColor: getBarColor()
-        }]} />
-      </View>
-    </View>
-  );
-};
-
 export default function ListPage() {
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const { state } = useNavigationContext();
   const { goToAddWordType, goToPracticeSettings, goToEditWord, goBack, goToSentences } = useNavigationHelper();
   const database = useDatabase();
@@ -81,8 +47,10 @@ export default function ListPage() {
   const [selectedWords, setSelectedWords] = useState<Word[]>([]);
   const [selectMode, setSelectMode] = useState(false);
 
-  const sortWords = (words: Word[]) => {
-    return [...words].sort((a, b) => {
+  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
+
+  const sortWords = (wordsToSort: Word[]) => {
+    return [...wordsToSort].sort((a, b) => {
       let comparison = 0;
       
       switch (sortOption) {
@@ -126,23 +94,23 @@ export default function ListPage() {
   const loadWords = useCallback(async () => {
     try {
       if (!state.currentList?.uuid) {
-        setError('List not found');
+        setError(i18n.t('list_not_found'));
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
       const loadedWords = await database.getWordsByList(state.currentList.uuid);
-      const sortedWords = sortWords(loadedWords);
-      setWords(sortedWords);
+      const sortedWordsResult = sortWords(loadedWords);
+      setWords(sortedWordsResult);
       setError(null);
-    } catch (error) {
-      console.error('Error loading words:', error);
-      setError('Failed to load words');
+    } catch (err) {
+      console.error('Error loading words:', err);
+      setError(i18n.t('failed_to_load_words'));
     } finally {
       setIsLoading(false);
     }
-  }, [state.currentList?.uuid, sortOption, sortDirection]);
+  }, [state.currentList?.uuid, sortOption, sortDirection, database, i18n.t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -200,9 +168,8 @@ export default function ListPage() {
           UTI: 'public.json'
         });
       }
-    } catch (error) {
-      console.error('Error exporting list:', error);
-      // Show error to user
+    } catch (expError) {
+      console.error('Error exporting list:', expError);
       Alert.alert(
         i18n.t('export_error_title'),
         i18n.t('export_error_message'),
@@ -225,7 +192,6 @@ export default function ListPage() {
       const file = result.assets[0];
       console.log('Selected file:', file);
       
-      // Read the file content
       const fileContent = await FileSystem.readAsStringAsync(file.uri);
       console.log('File content:', fileContent);
       
@@ -233,11 +199,9 @@ export default function ListPage() {
         const importedList = JSON.parse(fileContent);
         console.log('Parsed list:', importedList);
         
-        // Import the list
         const newListId = await importList(importedList);
         console.log('List imported successfully:', newListId);
         
-        // Refresh the list
         loadWords();
         
         Alert.alert(
@@ -253,8 +217,8 @@ export default function ListPage() {
           [{ text: i18n.t('ok') }]
         );
       }
-    } catch (error) {
-      console.error('Error importing list:', error);
+    } catch (impError) {
+      console.error('Error importing list:', impError);
       Alert.alert(
         i18n.t('import_error_title'),
         i18n.t('import_error_message'),
@@ -264,28 +228,22 @@ export default function ListPage() {
   };
 
   const handleDeleteWord = async (word: Word) => {
+    closeSwipeable(word.uuid);
     Alert.alert(
       i18n.t('delete_word_confirm_title'),
-      i18n.t('delete_word_confirm_message'),
+      i18n.t('delete_word_confirm_message', { word: word.word }),
       [
-        {
-          text: i18n.t('cancel'),
-          style: 'cancel'
-        },
+        { text: i18n.t('cancel'), style: 'cancel' },
         {
           text: i18n.t('delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await database.deleteWord(word.uuid);
-              // Refresh the word list
               loadWords();
-            } catch (error) {
-              console.error('Error deleting word:', error);
-              Alert.alert(
-                i18n.t('delete_error_title'),
-                i18n.t('delete_error_message')
-              );
+            } catch (delError) {
+              console.error('Error deleting word:', delError);
+              Alert.alert(i18n.t('Error'), i18n.t('failed_to_delete_word'));
             }
           }
         }
@@ -293,205 +251,263 @@ export default function ListPage() {
     );
   };
 
-  const renderWordDetails = async (word: Word) => {
-    const properties = await database.getWordProperties(word.uuid);
-    const details = (
-      <View style={styles.wordDetails}>
-        {word.example && (
-          <View style={styles.detailSection}>
-            <Text variant="labelMedium" style={styles.detailLabel}>{i18n.t('example')}:</Text>
-            <Text variant="bodyMedium">{word.example}</Text>
-          </View>
-        )}
-        {properties.map((property) => (
-          <View key={property.name} style={styles.detailSection}>
-            <Text variant="labelMedium" style={styles.detailLabel}>{property.name}:</Text>
-            <Text variant="bodyMedium">{String(property.value)}</Text>
-          </View>
-        ))}
-      </View>
-    );
-    setWordDetails(details);
+  const handleEditWord = (word: Word) => {
+    closeSwipeable(word.uuid);
+    goToEditWord(word);
   };
 
-  // Add effect to load word details when a word is selected
-  useEffect(() => {
-    if (selectedWord) {
-      renderWordDetails(selectedWord);
-    } else {
-      setWordDetails(null);
-    }
-  }, [selectedWord]);
+  const openSortMenu = () => setShowSortMenu(true);
+  const closeSortMenu = () => setShowSortMenu(false);
 
-  const handlePracticeSentences = () => {
-    if (selectedWords.length === 0) {
-      Alert.alert(
-        i18n.t('practice_sentences'),
-        i18n.t('select_words_for_practice'),
-        [
-          {
-            text: i18n.t('cancel'),
-            style: 'cancel',
-          },
-          {
-            text: i18n.t('select'),
-            onPress: () => setSelectMode(true),
-          }
-        ]
-      );
+  const applySort = (option: SortOption) => {
+    if (option === sortOption) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortOption(option);
+      setSortDirection('desc');
+    }
+    closeSortMenu();
+  };
+  
+  const closeSwipeable = (key: string) => {
+    if (swipeableRefs.current[key]) {
+      swipeableRefs.current[key]?.close();
+    }
+  };
+
+  const renderWordDetails = async (word: Word) => {
+    const details = await database.getWordDetails(word.uuid);
+    const typeConfig = state.currentLanguage?.wordTypes.find(wt => wt.type === word.type);
+  
+    if (!details) {
+      setWordDetails(<Text>{i18n.t('no_details_available')}</Text>);
       return;
     }
-
-    // Navigate to practice screen with selected words
-    goToSentences(selectedWords.map(w => w.uuid));
+  
+    setWordDetails(
+      <View style={styles.wordDetails}>
+        {typeConfig?.properties.map(prop => {
+          const value = details.properties[prop.name];
+          if (value === undefined || value === null || value === '') return null;
+  
+          return (
+            <View key={prop.name} style={styles.detailSection}>
+              <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>{i18n.t(prop.name) || prop.name}:</Text>
+              {prop.type === 'conjugation' && typeof value === 'object' ? (
+                Object.entries(value).map(([person, form]) => (
+                  <Text key={person} style={{ color: theme.colors.onSurface }}>{person}: {String(form)}</Text>
+                ))
+              ) : (
+                <Text style={{ color: theme.colors.onSurface }}>{String(value)}</Text>
+              )}
+            </View>
+          );
+        })}
+        {details.example_sentence && (
+          <View style={styles.detailSection}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>{i18n.t('example_sentence')}:</Text>
+            <Text style={{ color: theme.colors.onSurface }}>{details.example_sentence}</Text>
+          </View>
+        )}
+      </View>
+    );
+    setSelectedWord(word);
+    setShowInfo(true);
   };
 
-  const toggleWordSelection = (word: Word) => {
-    if (selectedWords.some(w => w.uuid === word.uuid)) {
-      setSelectedWords(selectedWords.filter(w => w.uuid !== word.uuid));
+  const handlePracticeSentences = () => {
+    if (state.currentLanguage && state.currentList) {
+        goToSentences(state.currentLanguage, state.currentList);
     } else {
-      setSelectedWords([...selectedWords, word]);
+        Alert.alert(i18n.t('Error'), i18n.t('list_or_language_not_found'));
     }
   };
 
-  if (isLoading) {
+  const headerActions = (
+    <View>
+      <IconButton icon="sort" onPress={openSortMenu} />
+      <Menu
+        visible={showSortMenu}
+        onDismiss={closeSortMenu}
+        anchor={<View style={{width:0, height:0}} />}
+      >
+        <Menu.Item onPress={() => applySort('proficiency')} title={i18n.t('sort_proficiency')} />
+        <Menu.Item onPress={() => applySort('created_at')} title={i18n.t('sort_date_added')} />
+        <Menu.Item onPress={() => applySort('abc')} title={i18n.t('sort_alphabetical')} />
+        <Menu.Item onPress={() => applySort('word_type')} title={i18n.t('sort_word_type')} />
+        <Menu.Item onPress={handlePracticeSentences} title={i18n.t('practice_sentences')} />
+        <Menu.Item onPress={handleExport} title={i18n.t('export_list')} />
+        <Menu.Item onPress={handleImport} title={i18n.t('import_list')} />
+      </Menu>
+    </View>
+  );
+  
+  const toggleWordSelection = (word: Word) => {
+    setSelectedWords(prev => 
+      prev.find(w => w.uuid === word.uuid) 
+        ? prev.filter(w => w.uuid !== word.uuid)
+        : [...prev, word]
+    );
+  };
+
+  const renderItem = ({ item }: { item: Word }) => {
+    const wordSwipeableRef = React.createRef<Swipeable>();
+    swipeableRefs.current[item.uuid] = wordSwipeableRef.current;
+
     return (
-      <SafeAreaWrapper>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
+        <SwipeableWordCard
+            swipeableRef={wordSwipeableRef}
+            onSwipeLeft={() => handleEditWord(item)}
+            onSwipeRight={() => handleDeleteWord(item)}
+        >
+            <TouchableOpacity onPress={() => renderWordDetails(item)} onLongPress={() => toggleWordSelection(item)}>
+                <Surface 
+                    style={[
+                        entryStyles.card, 
+                        styles.card, 
+                        { backgroundColor: theme.colors.surface },
+                        selectedWords.find(w => w.uuid === item.uuid) ? styles.selectedCard : {}
+                    ]} 
+                    elevation={1}
+                >
+                    <View style={entryStyles.cardContent}>
+                        <View style={entryStyles.wordCardTextContainer}>
+                            <Text style={[entryStyles.wordTranslation, { color: theme.colors.onSurface }]}>{item.translation}</Text>
+                            <Text style={[entryStyles.wordOriginal, { color: theme.colors.onSurfaceVariant }]}>{item.word}</Text>
+                            {item.example_sentence && <Text style={[styles.example, {color: theme.colors.onSurfaceVariant}]}>{item.example_sentence}</Text>}
+                        </View>
+                        <View style={entryStyles.wordProficiencyContainer}>
+                            <ProficiencyBar proficiency={item.proficiency} />
+                        </View>
+                    </View>
+                </Surface>
+            </TouchableOpacity>
+        </SwipeableWordCard>
+    );
+  };
+
+  const renderEmptyComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={{color: theme.colors.onSurfaceVariant}}>{i18n.t('no_words_in_list')}</Text>
+    </View>
+  );
+
+  const renderAddWordButton = () => (
+    <TouchableOpacity onPress={() => goToAddWordType()} disabled={isLoading}>
+        <Surface 
+            style={[
+                entryStyles.addButtonCard, 
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline, marginHorizontal: 8 }
+            ]} 
+            elevation={1}
+        >
+            <IconButton icon="plus" size={24} iconColor={theme.colors.primary} />
+            <Text style={[entryStyles.addButtonText, { color: theme.colors.primary }]}>
+                {i18n.t('add_word')}
+            </Text>
+        </Surface>
+    </TouchableOpacity>
+  );
+  
+  if (!state.currentList) {
+    return (
+      <SafeAreaWrapper backgroundColor={theme.colors.background}>
+        <UnifiedHeader title={i18n.t('list_not_found')} />
+        <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+          <Text style={{color: theme.colors.onBackground}}>{i18n.t('list_not_found_message')}</Text>
+          <Button onPress={() => goBack()}>{i18n.t('go_back')}</Button>
         </View>
+        <UnifiedFooter />
       </SafeAreaWrapper>
     );
   }
 
-  if (error) {
+  if (isLoading && (!words || words.length === 0)) { 
     return (
-      <SafeAreaWrapper>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+      <SafeAreaWrapper backgroundColor={theme.colors.background}>
+        <UnifiedHeader 
+            title={state.currentList.name} 
+            subtitle={state.currentList.description} 
+        />
+        <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" animating={true} color={theme.colors.primary} />
+          <Text style={{ marginTop: 16, color: theme.colors.onBackground }}>{i18n.t('loading_words')}</Text>
         </View>
+        <UnifiedFooter />
       </SafeAreaWrapper>
     );
   }
 
   return (
-    <SafeAreaWrapper excludeEdges={['bottom']}>
-      <BackButton />
-      <Surface style={styles.header} elevation={0}>
-        <View style={styles.headerContent}>
-          <Text variant="bodyMedium" style={styles.wordCount}>
-            {words.length} {words.length === 1 ? i18n.t('word_singular') : i18n.t('word_plural')}
-            {selectMode && selectedWords.length > 0 && ` (${selectedWords.length} ${i18n.t('selected')})`}
-          </Text>
-          <Text variant="headlineSmall" style={styles.listName}>
-            {state.currentList?.name}
-          </Text>
-          <View style={styles.headerActions}>
-            {selectMode ? (
-              <>
-                <Button 
-                  mode="contained" 
-                  onPress={handlePracticeSentences}
-                  style={styles.practiceButton}
-                >
-                  {i18n.t('practice_selected')}
-                </Button>
-                <Button 
-                  onPress={() => {
-                    setSelectMode(false);
-                    setSelectedWords([]);
-                  }}
-                >
-                  {i18n.t('cancel')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <IconButton
-                  icon="help-circle"
-                  size={24}
-                  onPress={() => setShowInfo(true)}
-                />
-                <IconButton
-                  icon="export"
-                  size={24}
-                  onPress={handleExport}
-                />
-                <IconButton
-                  icon="import"
-                  size={24}
-                  onPress={handleImport}
-                />
-                <IconButton
-                  icon="sort"
-                  size={24}
-                  style={{marginRight: -6}}
-                  onPress={() => setShowSortMenu(true)}
-                />
-                <IconButton
-                  style={{marginLeft: -6}}
-                  icon={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-                  size={24}
-                  onPress={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-                />
-              </>
-            )}
-          </View>
-        </View>
-      </Surface>
-      <FlatList
-        style={styles.flatList}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
-        data={filteredWords}
-        keyExtractor={(item) => item.uuid}
-        ListHeaderComponent={
-          <Searchbar
-            placeholder={i18n.t('search_words')}
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            style={styles.searchBar}
-          />
+    <SafeAreaWrapper backgroundColor={theme.colors.background} excludeEdges={['bottom']}>
+      <UnifiedHeader
+        title={state.currentList?.name || ''}
+        subtitle={`${words.length} ${words.length === 1 ? i18n.t('word_singular') : i18n.t('word_plural')}${selectMode && selectedWords.length > 0 ? ` (${selectedWords.length} ${i18n.t('selected')})` : ''}`}
+        actions={
+          selectMode ? (
+            <>
+              <Button 
+                mode="contained" 
+                onPress={handlePracticeSentences}
+                style={styles.practiceButton}
+              >
+                {i18n.t('practice_selected')}
+              </Button>
+              <Button 
+                onPress={() => {
+                  setSelectMode(false);
+                  setSelectedWords([]);
+                }}
+              >
+                {i18n.t('cancel')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <IconButton
+                icon="export"
+                size={24}
+                onPress={handleExport}
+              />
+              <IconButton
+                icon="import"
+                size={24}
+                onPress={handleImport}
+              />
+              <IconButton
+                icon="sort"
+                size={24}
+                style={{marginRight: -6}}
+                onPress={() => setShowSortMenu(true)}
+              />
+              <IconButton
+                style={{marginLeft: -6}}
+                icon={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
+                size={24}
+                onPress={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+              />
+            </>
+          )
         }
-        renderItem={({ item }) => (
-          <Card 
-            style={[
-              styles.card,
-              selectMode && selectedWords.some(w => w.uuid === item.uuid) && styles.selectedCard
-            ]}
-            onPress={() => selectMode ? toggleWordSelection(item) : setSelectedWord(item)}
-          >
-            <Card.Content style={styles.cardContent}>
-              <View style={styles.cardTextContainer}>
-                <Text variant="titleMedium">{item.translation}</Text>
-                <Text variant="bodyMedium">{item.word}</Text>
-                <ProficiencyBar proficiency={item.proficiency} isKnown={item.isKnown} />
-              </View>
-              {!selectMode && (
-                <View style={styles.cardActions}>
-                  <IconButton
-                    icon="pencil"
-                    size={24}
-                    onPress={() => {
-                      goToEditWord(item.uuid);
-                    }}
-                    style={styles.editButton}
-                  />
-                  <IconButton
-                    icon="delete"
-                    size={24}
-                    onPress={() => handleDeleteWord(item)}
-                    style={styles.deleteButton}
-                  />
-                </View>
-              )}
-            </Card.Content>
-          </Card>
-        )}
       />
-      <FAB
-        icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
-        onPress={goToAddWordType}
+      <Searchbar
+        placeholder={i18n.t('search_words')}
+        onChangeText={setSearchQuery}
+        value={searchQuery}
+        style={[styles.searchBar, {backgroundColor: theme.colors.surface, color: theme.colors.onSurface}]}
+        inputStyle={{color: theme.colors.onSurface}}
+        iconColor={theme.colors.onSurfaceVariant}
+        placeholderTextColor={theme.colors.onSurfaceVariant}
+        elevation={1}
+      />
+      <FlatList
+        data={filteredWords}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.uuid}
+        style={styles.flatListContainer}
+        contentContainerStyle={styles.flatListContentContainer}
+        ListEmptyComponent={renderEmptyComponent}
+        ListFooterComponent={renderAddWordButton}
       />
       <FAB
         icon="lightbulb"
@@ -578,11 +594,12 @@ export default function ListPage() {
               </Button>
             </View>
           </Dialog.Content>
-          <Dialog.Content>
+          <Dialog.Actions>
             <Button onPress={() => setShowSortMenu(false)}>{i18n.t('cancel')}</Button>
-          </Dialog.Content>
+          </Dialog.Actions>
         </Dialog>
       </Portal>
+      <UnifiedFooter />
     </SafeAreaWrapper>
   );
 }
@@ -590,120 +607,40 @@ export default function ListPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
-  contentContainer: {
+  flatListContainer: {
     flex: 1,
+  },
+  flatListContentContainer: {
+    paddingVertical: 8,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  errorContainer: {
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerContent: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  listName: {
-    textAlign: 'center',
-  },
-  wordCount: {
-    textAlign: 'center',
-    color: '#666',
+    marginTop: 50,
   },
   card: {
     marginHorizontal: 8,
     marginBottom: 6,
   },
-  cardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardTextContainer: {
-    flex: 1,
-  },
   example: {
-    color: '#666',
-    marginTop: 0,
-  },
-  editButton: {
-    margin: 0,
-  },
-  deleteButton: {
-    margin: 0,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-  },
-  memorizeFab: {
-    bottom: 80,
-  },
-  errorText: {
-    color: '#dc2626',
-    textAlign: 'center',
-    margin: 16,
-  },
-  flatList: {
-    paddingTop: 6,
-  },
-  proficiencyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    fontSize: 14,
+    fontStyle: 'italic',
     marginTop: 4,
   },
-  statusIndicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 2,
-    marginRight: 6,
-  },
-  proficiencyBarContainer: {
-    flex: 1,
-    height: 3,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  proficiencyBar: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    height: 40,
-  },
-  importInput: {
-    marginTop: 16,
-    minHeight: 120,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchBar: {
+    marginHorizontal: 8,
+    marginBottom: 2,
+    marginTop: 2,
   },
   wordDialog: {
     maxHeight: '80%',
-  },
-  dialogWord: {
-    marginBottom: 16,
   },
   wordDetails: {
     gap: 12,
@@ -712,32 +649,35 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   detailLabel: {
-    color: '#666',
+    fontWeight: 'bold',
+    fontSize: 13,
   },
-  searchBar: {
-    marginTop: 2,
-    marginBottom: 8,
-    marginHorizontal: 8,
+  selectedCard: {
+  },
+  practiceButton: {
+    marginRight: 8,
+  },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+  },
+  memorizeFab: {
+    backgroundColor: '#4CAF50',
+  },
+  practiceFab: {
+    backgroundColor: '#2196F3',
   },
   sortMenu: {
-    padding: 8,
-    width: 360,
-    maxHeight: 400,
-    alignSelf: 'center',
+    maxHeight: '80%',
   },
   sortOptions: {
     gap: 8,
   },
   sortButton: {
-    justifyContent: 'flex-start',
+    width: '100%',
   },
-  practiceFab: {
-    bottom: 144,
-  },
-  selectedCard: {
-    backgroundColor: '#E0E0E0',
-  },
-  practiceButton: {
-    marginRight: 8,
+  dialogWord: {
+    fontWeight: 'bold',
   },
 });

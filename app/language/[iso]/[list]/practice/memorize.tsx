@@ -24,7 +24,6 @@ import { useNavigationHelper } from '@/hooks/useNavigation';
 import { WordProperties, PropertyType } from '@/types/word';
 import { logger } from '@/utils/logger';
 import { languageConfigs } from '@/types/languages';
-import BackButton from '@/components/BackButton';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 
 const { width, height } = Dimensions.get('window');
@@ -337,7 +336,6 @@ export default function MemorizePage() {
 
   return (
     <SafeAreaWrapper backgroundColor="#F8F9FA">
-      <BackButton color="black" />
       <GestureHandlerRootView style={{ flex: 1 }}>
         <View style={styles.content}>
           <View style={styles.progressContainer}>

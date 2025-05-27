@@ -11,10 +11,6 @@ interface SafeAreaWrapperProps {
   excludeEdges?: Array<'top' | 'right' | 'bottom' | 'left'>;
 }
 
-/**
- * A wrapper component that provides safe area insets for content
- * to avoid notches, cameras, home indicators, etc.
- */
 const SafeAreaWrapper: React.FC<SafeAreaWrapperProps> = ({
   children,
   style,
@@ -56,6 +52,7 @@ const SafeAreaWrapper: React.FC<SafeAreaWrapperProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    elevation: 3,
   },
   content: {
     flex: 1,

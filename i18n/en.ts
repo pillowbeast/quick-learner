@@ -45,6 +45,7 @@ export default {
     required: "required",
     please_fill_required: "Please fill in all required fields",
     failed_to_submit: "Failed to submit word. Please try again.",
+    edit_list: "Edit List",
 
     // Lists
     list_name: "List Name",

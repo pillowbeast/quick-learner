@@ -12,11 +12,11 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.pillowbeast.quicklearner",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/quicklearner_logo.png",
         "backgroundColor": "#ffffff"
-      },
-      "package": "com.pillowbeast.quicklearner"
+      }
     },
     "web": {
       "bundler": "metro",

@@ -47,6 +47,7 @@ export default {
     list_name: "Listenname",
     default_list: "Standardliste",
     default_list_description: "Eine Sammlung häufiger Wörter zum Einstieg",
+    edit_list: "Liste bearbeiten",
 
     // Practice
     study: "Lernen",

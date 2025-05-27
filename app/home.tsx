@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { Text, Surface, IconButton } from "react-native-paper";
 import { useTheme } from "react-native-paper";
 import i18n from "@/i18n";
@@ -10,71 +10,28 @@ import { useNavigationHelper } from "@/hooks/useNavigation";
 import Flag from "@/components/Flag";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import SafeAreaWrapper from "@/components/SafeAreaWrapper";
+import UnifiedHeader from "@/components/UnifiedHeader";
+import UnifiedFooter from "@/components/UnifiedFooter";
+import { entryStyles } from "@/styles/entryStyles";
 
 export default function Home() {
-  const theme = useTheme();
   const { goOnboarding, goToSettings } = useNavigationHelper();
   const { state } = useNavigationContext();
 
   return (
-    <SafeAreaWrapper backgroundColor={theme.colors.background}>
-      <Surface style={styles.header} elevation={0}>
-        <View style={styles.titleContainer}>
-          <DisplayLanguageSelector />
-
-          <Text variant="headlineMedium" style={styles.title}>{i18n.t('app_name')}</Text>
-          <View style={styles.headerActions}>
-            <IconButton
-              icon="cog"
-              size={24}
-              onPress={goToSettings}
-              style={styles.helpButton}
-            />
-            <IconButton
-              icon="help-circle"
-              size={24}
-              onPress={goOnboarding}
-              style={styles.helpButton}
-            />
-          </View>
-        </View>
-        <Text variant="bodyLarge" style={styles.subtitle}>{i18n.t('start_journey')}</Text>
-      </Surface>
-
-      <View style={styles.content}>
+    <SafeAreaWrapper>
+      <UnifiedHeader title={i18n.t('app_name')}/>
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <LanguageSelector />
-      </View>
+      </ScrollView>
+      <UnifiedFooter />
     </SafeAreaWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 20,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  title: {
-    fontWeight: 'bold',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  helpButton: {
-    marginLeft: 8,
-  },
-  subtitle: {
-    marginTop: 8,
-    marginBottom: 16,
-    textAlign: 'center',
+  contentContainer: {
+    paddingVertical: 8,
   },
   content: {
     flex: 1,
