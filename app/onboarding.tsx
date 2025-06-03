@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { Text, Surface, Button, useTheme } from 'react-native-paper';
+import { Text, Surface, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import Carousel from 'react-native-reanimated-carousel';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '@/i18n';
+import { useAppTheme } from '@/styles/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const ONBOARDING_KEY = '@quick_learner_onboarding_complete';
@@ -40,9 +41,9 @@ const slides: Slide[] = [
 ];
 
 export default function Onboarding() {
-    const theme = useTheme();
     const router = useRouter();
     const [currentIndex, setCurrentIndex] = useState(0);
+    const { colors } = useAppTheme();
 
     const handleComplete = async () => {
         try {
@@ -56,7 +57,7 @@ export default function Onboarding() {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             <Carousel
                 loop={false}
                 width={width}
@@ -68,7 +69,7 @@ export default function Onboarding() {
                         <MaterialCommunityIcons
                             name={item.icon}
                             size={64}
-                            color={theme.colors.primary}
+                            color={colors.primary}
                             style={styles.icon}
                         />
                         <Text variant="headlineMedium" style={styles.title}>
@@ -90,8 +91,8 @@ export default function Onboarding() {
                                 {
                                     backgroundColor:
                                         currentIndex === index
-                                            ? theme.colors.primary
-                                            : theme.colors.outline,
+                                            ? colors.primary
+                                            : colors.muted,
                                 },
                             ]}
                         />

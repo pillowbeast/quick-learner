@@ -2,18 +2,25 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { useNavigationHelper } from '@/hooks/useNavigation';
+import { useAppTheme } from '@/styles/ThemeContext';
 
 const UnifiedFooter = () => {
   const { goToSettings } = useNavigationHelper();
+  const { theme, toggleTheme } = useAppTheme();
 
   return (
     <View>
       <View style={styles.bottomBorder} />
       <View style={styles.footerContainer}>
         <Text style={[styles.text]}>Impressum / About</Text>
+        <IconButton
+          icon={theme === 'dark' ? 'white-balance-sunny' : 'moon-waning-crescent'}
+          size={20}
+          onPress={toggleTheme}
+          accessibilityLabel="Toggle theme"
+        />
       </View>
     </View>
-
   );
 };
 
@@ -30,9 +37,10 @@ const styles = StyleSheet.create({
   footerContainer: {
     paddingTop: 10,
     backgroundColor: '#ffffff',
-    flexDirection: 'column',
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 8,
   },
   text: {
     fontSize: 12,

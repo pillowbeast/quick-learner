@@ -1,9 +1,11 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from 'react-native';
+import { lightColors, darkColors } from './tokens';
 
 export const ThemeContext = createContext({
   theme: 'light',
+  colors: lightColors,
   toggleTheme: () => {},
 });
 
@@ -11,7 +13,10 @@ const THEME_STORAGE_KEY = '@app_theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    systemColorScheme === 'dark' ? 'dark' : 'light'
+  );
+  const colors = theme === 'dark' ? darkColors : lightColors;
 
   useEffect(() => {
     loadSavedTheme();
@@ -21,10 +26,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     try {
       const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
       if (savedTheme) {
-        setTheme(savedTheme);
+        setTheme(savedTheme as 'light' | 'dark');
       } else {
-        // Use system theme as default if no saved theme
-        setTheme(systemColorScheme || 'light');
+        setTheme(systemColorScheme === 'dark' ? 'dark' : 'light');
       }
     } catch (error) {
       console.error('Failed to load theme:', error);
@@ -42,8 +46,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, colors, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
+}
+
+export function useAppTheme() {
+  return useContext(ThemeContext);
 }

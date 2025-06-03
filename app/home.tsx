@@ -1,7 +1,5 @@
 import React from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
-import { Text, Surface, IconButton } from "react-native-paper";
-import { useTheme } from "react-native-paper";
 import i18n from "@/i18n";
 
 import LanguageSelector from "@/components/LanguageSelector";
@@ -13,15 +11,20 @@ import SafeAreaWrapper from "@/components/SafeAreaWrapper";
 import UnifiedHeader from "@/components/UnifiedHeader";
 import UnifiedFooter from "@/components/UnifiedFooter";
 import { entryStyles } from "@/styles/entryStyles";
+import { useAppTheme } from "@/styles/ThemeContext";
 
 export default function Home() {
   const { goOnboarding, goToSettings } = useNavigationHelper();
   const { state } = useNavigationContext();
+  const { colors } = useAppTheme();
 
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper backgroundColor={colors.background}>
       <UnifiedHeader title={i18n.t('app_name')}/>
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={[styles.content, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.contentContainer}
+      >
         <LanguageSelector />
       </ScrollView>
       <UnifiedFooter />

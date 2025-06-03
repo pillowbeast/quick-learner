@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
 import { View, StyleSheet, FlatList, Share, Platform, Alert, TouchableOpacity, ScrollView } from 'react-native';
-import { Text, Card, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, TextInput, Searchbar, Menu, useTheme } from 'react-native-paper';
+import { Text, Card, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, TextInput, Searchbar, Menu } from 'react-native-paper';
 import { useFocusEffect, router } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -21,13 +21,14 @@ import { entryStyles } from "@/styles/entryStyles";
 import ProficiencyBar from "@/components/ProficiencyBar";
 import SwipeableWordCard from "@/components/SwipeableWordCard";
 import i18n from '@/i18n';
+import { useAppTheme } from '@/styles/ThemeContext';
 
 type SortOption = 'proficiency' | 'created_at' | 'abc' | 'word_type';
 type SortDirection = 'asc' | 'desc';
 
 export default function ListPage() {
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const { state } = useNavigationContext();
   const { goToAddWordType, goToPracticeSettings, goToEditWord, goBack, goToSentences } = useNavigationHelper();
   const database = useDatabase();
@@ -253,7 +254,7 @@ export default function ListPage() {
 
   const handleEditWord = (word: Word) => {
     closeSwipeable(word.uuid);
-    goToEditWord(word);
+    goToEditWord(word.uuid);
   };
 
   const openSortMenu = () => setShowSortMenu(true);
@@ -276,37 +277,24 @@ export default function ListPage() {
   };
 
   const renderWordDetails = async (word: Word) => {
-    const details = await database.getWordDetails(word.uuid);
-    const typeConfig = state.currentLanguage?.wordTypes.find(wt => wt.type === word.type);
-  
-    if (!details) {
-      setWordDetails(<Text>{i18n.t('no_details_available')}</Text>);
-      return;
-    }
-  
     setWordDetails(
       <View style={styles.wordDetails}>
-        {typeConfig?.properties.map(prop => {
-          const value = details.properties[prop.name];
-          if (value === undefined || value === null || value === '') return null;
-  
-          return (
-            <View key={prop.name} style={styles.detailSection}>
-              <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>{i18n.t(prop.name) || prop.name}:</Text>
-              {prop.type === 'conjugation' && typeof value === 'object' ? (
-                Object.entries(value).map(([person, form]) => (
-                  <Text key={person} style={{ color: theme.colors.onSurface }}>{person}: {String(form)}</Text>
-                ))
-              ) : (
-                <Text style={{ color: theme.colors.onSurface }}>{String(value)}</Text>
-              )}
-            </View>
-          );
-        })}
-        {details.example_sentence && (
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailLabel, { color: colors.muted }]}>{i18n.t('word')}:</Text>
+          <Text style={{ color: colors.text }}>{word.word}</Text>
+        </View>
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailLabel, { color: colors.muted }]}>{i18n.t('translation')}:</Text>
+          <Text style={{ color: colors.text }}>{word.translation}</Text>
+        </View>
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailLabel, { color: colors.muted }]}>{i18n.t('type')}:</Text>
+          <Text style={{ color: colors.text }}>{word.type}</Text>
+        </View>
+        {word.example && (
           <View style={styles.detailSection}>
-            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>{i18n.t('example_sentence')}:</Text>
-            <Text style={{ color: theme.colors.onSurface }}>{details.example_sentence}</Text>
+            <Text style={[styles.detailLabel, { color: colors.muted }]}>{i18n.t('example')}:</Text>
+            <Text style={{ color: colors.text }}>{word.example}</Text>
           </View>
         )}
       </View>
@@ -365,19 +353,19 @@ export default function ListPage() {
                     style={[
                         entryStyles.card, 
                         styles.card, 
-                        { backgroundColor: theme.colors.surface },
+                        { backgroundColor: colors.background },
                         selectedWords.find(w => w.uuid === item.uuid) ? styles.selectedCard : {}
                     ]} 
                     elevation={1}
                 >
                     <View style={entryStyles.cardContent}>
                         <View style={entryStyles.wordCardTextContainer}>
-                            <Text style={[entryStyles.wordTranslation, { color: theme.colors.onSurface }]}>{item.translation}</Text>
-                            <Text style={[entryStyles.wordOriginal, { color: theme.colors.onSurfaceVariant }]}>{item.word}</Text>
-                            {item.example_sentence && <Text style={[styles.example, {color: theme.colors.onSurfaceVariant}]}>{item.example_sentence}</Text>}
+                            <Text style={[entryStyles.wordTranslation, { color: colors.text }]}>{item.translation}</Text>
+                            <Text style={[entryStyles.wordOriginal, { color: colors.muted }]}>{item.word}</Text>
+                            {item.example && <Text style={[styles.example, {color: colors.muted}]}>{item.example}</Text>}
                         </View>
                         <View style={entryStyles.wordProficiencyContainer}>
-                            <ProficiencyBar proficiency={item.proficiency} />
+                            <ProficiencyBar proficiency={item.proficiency} isKnown={item.isKnown} />
                         </View>
                     </View>
                 </Surface>
@@ -388,7 +376,7 @@ export default function ListPage() {
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
-      <Text style={{color: theme.colors.onSurfaceVariant}}>{i18n.t('no_words_in_list')}</Text>
+      <Text style={{color: colors.muted}}>{i18n.t('no_words_in_list')}</Text>
     </View>
   );
 
@@ -396,13 +384,13 @@ export default function ListPage() {
     <TouchableOpacity onPress={() => goToAddWordType()} disabled={isLoading}>
         <Surface 
             style={[
-                entryStyles.addButtonCard, 
-                { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline, marginHorizontal: 8 }
+                entryStyles.card, 
+                { backgroundColor: colors.background, borderColor: colors.secondary, marginHorizontal: 8 }
             ]} 
             elevation={1}
         >
-            <IconButton icon="plus" size={24} iconColor={theme.colors.primary} />
-            <Text style={[entryStyles.addButtonText, { color: theme.colors.primary }]}>
+            <IconButton icon="plus" size={24} iconColor={colors.primary} />
+            <Text style={[entryStyles.addButtonText, { color: colors.primary }]}>
                 {i18n.t('add_word')}
             </Text>
         </Surface>
@@ -411,10 +399,10 @@ export default function ListPage() {
   
   if (!state.currentList) {
     return (
-      <SafeAreaWrapper backgroundColor={theme.colors.background}>
+      <SafeAreaWrapper backgroundColor={colors.background}>
         <UnifiedHeader title={i18n.t('list_not_found')} />
-        <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-          <Text style={{color: theme.colors.onBackground}}>{i18n.t('list_not_found_message')}</Text>
+        <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+          <Text style={{color: colors.text}}>{i18n.t('list_not_found_message')}</Text>
           <Button onPress={() => goBack()}>{i18n.t('go_back')}</Button>
         </View>
         <UnifiedFooter />
@@ -424,14 +412,13 @@ export default function ListPage() {
 
   if (isLoading && (!words || words.length === 0)) { 
     return (
-      <SafeAreaWrapper backgroundColor={theme.colors.background}>
+      <SafeAreaWrapper backgroundColor={colors.background}>
         <UnifiedHeader 
             title={state.currentList.name} 
-            subtitle={state.currentList.description} 
         />
-        <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-          <ActivityIndicator size="large" animating={true} color={theme.colors.primary} />
-          <Text style={{ marginTop: 16, color: theme.colors.onBackground }}>{i18n.t('loading_words')}</Text>
+        <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" animating={true} color={colors.primary} />
+          <Text style={{ marginTop: 16, color: colors.text }}>{i18n.t('loading_words')}</Text>
         </View>
         <UnifiedFooter />
       </SafeAreaWrapper>
@@ -439,10 +426,9 @@ export default function ListPage() {
   }
 
   return (
-    <SafeAreaWrapper backgroundColor={theme.colors.background} excludeEdges={['bottom']}>
+    <SafeAreaWrapper backgroundColor={colors.background} excludeEdges={['bottom']}>
       <UnifiedHeader
         title={state.currentList?.name || ''}
-        subtitle={`${words.length} ${words.length === 1 ? i18n.t('word_singular') : i18n.t('word_plural')}${selectMode && selectedWords.length > 0 ? ` (${selectedWords.length} ${i18n.t('selected')})` : ''}`}
         actions={
           selectMode ? (
             <>
@@ -494,10 +480,10 @@ export default function ListPage() {
         placeholder={i18n.t('search_words')}
         onChangeText={setSearchQuery}
         value={searchQuery}
-        style={[styles.searchBar, {backgroundColor: theme.colors.surface, color: theme.colors.onSurface}]}
-        inputStyle={{color: theme.colors.onSurface}}
-        iconColor={theme.colors.onSurfaceVariant}
-        placeholderTextColor={theme.colors.onSurfaceVariant}
+        style={[styles.searchBar, {backgroundColor: colors.background, color: colors.text}]}
+        inputStyle={{color: colors.text}}
+        iconColor={colors.muted}
+        placeholderTextColor={colors.muted}
         elevation={1}
       />
       <FlatList

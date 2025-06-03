@@ -1,16 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from "expo-router";
 import { useFonts } from 'expo-font';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { PaperProvider } from 'react-native-paper';
 
 import { NavigationProvider } from '@/hooks/useNavigationContext';
 import { DatabaseProvider } from '@/hooks/useDatabase';
-import { ThemeProvider } from "@/styles/ThemeContext";
+import { ThemeProvider, useAppTheme } from "@/styles/ThemeContext";
 
-export default function RootLayout() {
+// AppContent is split from RootLayout so that the Statusbar rerenders upon theme changes
+function AppContent() {
+  const { theme } = useAppTheme();
+
   const [fontsLoaded] = useFonts({
     'SpaceMono-Regular': require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -20,34 +24,47 @@ export default function RootLayout() {
   }
 
   return (
+    <>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <PaperProvider>
+        <SafeAreaProvider>
+          <NavigationProvider>
+            <Stack screenOptions={{
+              headerShown: false,
+            }}>
+              <Stack.Screen name="home" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="language/[iso]" />
+              <Stack.Screen name="language/[iso]/[list]" />
+              <Stack.Screen name="language/[iso]/[list]/word/[uuid]" />
+              <Stack.Screen name="language/[iso]/[list]/word/add_type" />
+              <Stack.Screen name="language/[iso]/[list]/word/add_details" />
+              <Stack.Screen name="language/[iso]/[list]/practice/study" />
+              <Stack.Screen name="language/[iso]/[list]/practice/memorize" />
+              <Stack.Screen name="add_lang" />
+              <Stack.Screen
+                name="settings"
+                options={{
+                  title: 'Settings',
+                }}
+              />
+            </Stack>
+          </NavigationProvider>
+        </SafeAreaProvider>
+      </PaperProvider>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  // RootLayout is now primarily for setting up global providers.
+  // It no longer directly consumes the theme for its immediate children.
+  // AppContent re-renders when theme changes, so the StatusBar re-renders too.
+  return (
     <GestureHandlerRootView style={styles.container}>
       <DatabaseProvider>
         <ThemeProvider>
-          <SafeAreaProvider>
-            <NavigationProvider>
-              <StatusBar style="dark" />
-              <Stack screenOptions={{
-                headerShown: false,
-              }}>
-                <Stack.Screen name="home" />
-                <Stack.Screen name="onboarding" />
-                <Stack.Screen name="language/[iso]" />
-                <Stack.Screen name="language/[iso]/[list]" />
-                <Stack.Screen name="language/[iso]/[list]/word/[uuid]" />
-                <Stack.Screen name="language/[iso]/[list]/word/add_type" />
-                <Stack.Screen name="language/[iso]/[list]/word/add_details" />
-                <Stack.Screen name="language/[iso]/[list]/practice/study" />
-                <Stack.Screen name="language/[iso]/[list]/practice/memorize" />
-                <Stack.Screen name="add_lang" />
-                <Stack.Screen
-                  name="settings"
-                  options={{
-                    title: 'Settings',
-                  }}
-                />
-              </Stack>
-            </NavigationProvider>
-          </SafeAreaProvider>
+          <AppContent />
         </ThemeProvider>
       </DatabaseProvider>
     </GestureHandlerRootView>

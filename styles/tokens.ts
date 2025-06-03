@@ -1,9 +1,18 @@
-export const colors = {
+export const lightColors = {
     primary: '#4F6D7A',
     secondary: '#C0D6DF',
     accent: '#D9492C',
     background: '#F5F5F5',
     text: '#333',
+    muted: '#999',
+};
+
+export const darkColors = {
+    primary: '#8ED6CB',
+    secondary: '#C0D6DF',
+    accent: '#D9492C',
+    background: '#29232d',
+    text: '#fff',
     muted: '#999',
 };
 
