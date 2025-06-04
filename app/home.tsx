@@ -1,7 +1,8 @@
 import React from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
-import i18n from "@/i18n";
+import { View, ScrollView, StyleSheet, Button } from "react-native";
+import { IconButton } from 'react-native-paper';
 
+import i18n from "@/i18n";
 import LanguageSelector from "@/components/LanguageSelector";
 import DisplayLanguageSelector from "@/components/DisplayLanguageSelector";
 import { useNavigationHelper } from "@/hooks/useNavigation";
@@ -14,16 +15,26 @@ import { entryStyles } from "@/styles/entryStyles";
 import { useAppTheme } from "@/styles/ThemeContext";
 
 export default function Home() {
-  const { goOnboarding, goToSettings } = useNavigationHelper();
+  const { goToOnboarding, goToSettings } = useNavigationHelper();
   const { state } = useNavigationContext();
-  const { colors } = useAppTheme();
+  const { theme, colors } = useAppTheme();
 
   return (
     <SafeAreaWrapper backgroundColor={colors.background}>
-      <UnifiedHeader title={i18n.t('app_name')}/>
+      <UnifiedHeader 
+        title={i18n.t('app_name')}
+        actions={
+            <>
+              <IconButton
+                icon="help-circle"
+                size={24}
+                onPress={goToOnboarding}
+                iconColor={colors.secondary}>
+              </IconButton>
+            </>
+        } />
       <ScrollView
         style={[styles.content, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.contentContainer}
       >
         <LanguageSelector />
       </ScrollView>
@@ -33,9 +44,6 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  contentContainer: {
-    paddingVertical: 8,
-  },
   content: {
     flex: 1,
   },

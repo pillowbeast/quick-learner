@@ -3,7 +3,6 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from "expo-router";
 import { useFonts } from 'expo-font';
-import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 
@@ -34,14 +33,6 @@ function AppContent() {
             }}>
               <Stack.Screen name="home" />
               <Stack.Screen name="onboarding" />
-              <Stack.Screen name="language/[iso]" />
-              <Stack.Screen name="language/[iso]/[list]" />
-              <Stack.Screen name="language/[iso]/[list]/word/[uuid]" />
-              <Stack.Screen name="language/[iso]/[list]/word/add_type" />
-              <Stack.Screen name="language/[iso]/[list]/word/add_details" />
-              <Stack.Screen name="language/[iso]/[list]/practice/study" />
-              <Stack.Screen name="language/[iso]/[list]/practice/memorize" />
-              <Stack.Screen name="add_lang" />
               <Stack.Screen
                 name="settings"
                 options={{
@@ -61,7 +52,7 @@ export default function RootLayout() {
   // It no longer directly consumes the theme for its immediate children.
   // AppContent re-renders when theme changes, so the StatusBar re-renders too.
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <GestureHandlerRootView>
       <DatabaseProvider>
         <ThemeProvider>
           <AppContent />
@@ -70,9 +61,3 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

@@ -7,9 +7,7 @@ export function useNavigationHelper() {
     const { state, setCurrentLanguage, setCurrentList } = useNavigationContext();
 
     return {
-        goOnboarding: () => {
-            router.replace("/onboarding");
-        },
+        // General Pages
         goHomePush: () => {
             router.push("/home");
         },
@@ -17,6 +15,14 @@ export function useNavigationHelper() {
             router.replace("/home");
         },
         goBack: () => router.back(),
+        goToOnboarding: () => {
+            router.replace("/onboarding");
+        },
+        goToSettings: () => {
+            router.push("settings" as any);
+        },
+
+        // Language Pages
         goToLanguage: (language: Language) => {
             setCurrentLanguage(language);
             router.push(`/language/${language.iso}?name=${language.name}`);
@@ -27,12 +33,8 @@ export function useNavigationHelper() {
             router.push(`/language/${language.iso}/${list.name}`);
         },
         goToAddLanguage: () => router.push("/language/add_lang"),
-        goToStudy: () => {
-            if (!state.currentLanguage?.iso || !state.currentList?.name) {
-                throw new Error("Language and list must be set before navigating to study");
-            }
-            router.push(`/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/study`);
-        },
+
+        // Practice Pages
         goToMemorize: (params?: { settings: string }) => {
             if (!state.currentLanguage?.iso || !state.currentList?.name) {
                 throw new Error("Language and list must be set before navigating to memorize");
@@ -41,6 +43,12 @@ export function useNavigationHelper() {
                 pathname: `/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/memorize`,
                 params
             } as any);
+        },
+        goToPracticeSettings: () => {
+            if (!state.currentLanguage?.iso || !state.currentList?.name) {
+                throw new Error("Language and list must be set before navigating to practice settings");
+            }
+            router.push(`/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/settings`);
         },
         goToSentences: (wordUuids: string[]) => {
             if (!state.currentLanguage?.iso || !state.currentList?.name) {
@@ -51,6 +59,8 @@ export function useNavigationHelper() {
                 params: { words: JSON.stringify(wordUuids) }
             } as any);
         },
+
+        // Word Pages
         goToAddWordType: () => {
             if (!state.currentLanguage?.iso || !state.currentList?.name) {
                 throw new Error("Language and list must be set before navigating to add word");
@@ -74,15 +84,8 @@ export function useNavigationHelper() {
                 pathname: `/language/${state.currentLanguage.iso}/${state.currentList.name}/word/${uuid}`,
             } as any);
         },
-        goToPracticeSettings: () => {
-            if (!state.currentLanguage?.iso || !state.currentList?.name) {
-                throw new Error("Language and list must be set before navigating to practice settings");
-            }
-            router.push(`/language/${state.currentLanguage.iso}/${state.currentList.name}/practice/settings`);
-        },
-        goToSettings: () => {
-            router.push("settings" as any);
-        },
+        
+        // Getters/Utils
         getCurrentLanguage: () => state.currentLanguage,
         getCurrentList: () => state.currentList,
     };

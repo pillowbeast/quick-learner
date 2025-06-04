@@ -5,8 +5,8 @@ import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useAppTheme } from '@/styles/ThemeContext';
 
 const UnifiedFooter = () => {
-  const { goToSettings } = useNavigationHelper();
-  const { theme, toggleTheme } = useAppTheme();
+  const { goToSettings, goToOnboarding } = useNavigationHelper();
+  const { theme, toggleTheme, colors } = useAppTheme();
 
   return (
     <View>
@@ -19,6 +19,14 @@ const UnifiedFooter = () => {
           onPress={toggleTheme}
           accessibilityLabel="Toggle theme"
         />
+        <View style={styles.bottomRow}>
+          <IconButton
+            icon="help-circle"
+            size={20}
+            onPress={goToOnboarding}
+            iconColor={colors.text}
+          />
+        </View>
       </View>
     </View>
   );
@@ -44,6 +52,12 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 12,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
   },
 });
 

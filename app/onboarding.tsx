@@ -6,6 +6,7 @@ import Carousel from 'react-native-reanimated-carousel';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '@/i18n';
+
 import { useAppTheme } from '@/styles/ThemeContext';
 
 const { width } = Dimensions.get('window');
