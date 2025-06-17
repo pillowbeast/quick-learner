@@ -52,7 +52,7 @@ export const spacing = {
 
 export const typography = {
     header: { fontSize: 32 as const, fontWeight: '700' as const },
-    subheader: { fontSize: 24, fontWeight: '600' as const },
+    subheader: { fontSize: 24, fontWeight: '700' as const },
     body: { fontSize: 20, fontWeight: '400' as const },
     caption: { fontSize: 16, fontWeight: '200' as const },
 };

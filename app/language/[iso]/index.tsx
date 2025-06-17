@@ -14,12 +14,16 @@ import UnifiedHeader from "@/components/UnifiedHeader";
 import UnifiedFooter from "@/components/UnifiedFooter";
 import { entryStyles } from "@/styles/entryStyles";
 import SwipeableListCard from "@/components/SwipeableListCard";
+import { typography } from '@/styles/tokens';
+import { useAppTheme } from '@/styles/ThemeContext';
+import UnifiedSeperator from '@/components/UnifiedSeperator';
+import UnifiedAddButton from '@/components/UnifiedAddButton';
 
 export default function LanguagePage() {
   const { state, setCurrentList, setCurrentLanguage } = useNavigationContext();
   const { goToList } = useNavigationHelper();
   const database = useDatabase();
-
+  const { colors } = useAppTheme();
   const [newListName, setNewListName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -142,7 +146,7 @@ export default function LanguagePage() {
 
   if (!state.currentLanguage) {
     return (
-        <SafeAreaWrapper>
+        <SafeAreaWrapper backgroundColor={colors.background}>
             <View style={styles.loadingContainer}>
                 <Text>Error: No language selected.</Text>
             </View>
@@ -153,7 +157,7 @@ export default function LanguagePage() {
   // Loading Screen
   if (isLoading && (!state.currentLanguage.lists || state.currentLanguage.lists.length === 0)) { 
     return (
-      <SafeAreaWrapper>
+      <SafeAreaWrapper backgroundColor={colors.background}>
         <UnifiedHeader 
           title={state.currentLanguage.name}
         />
@@ -166,13 +170,14 @@ export default function LanguagePage() {
   }
 
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper backgroundColor={colors.background}>
       <UnifiedHeader 
         title={state.currentLanguage.name}
       />
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContentContainer}>
-        {state.currentLanguage.lists?.map((list) => {
+        {state.currentLanguage.lists?.map((list, index) => {
           const listSwipeableRef = React.createRef<SwipeableMethods>();
+          const isLastItem = index === (state.currentLanguage?.lists?.length || 0) - 1;
 
           return (
             <SwipeableListCard
@@ -182,44 +187,25 @@ export default function LanguagePage() {
               onSwipeRight={() => handleDeleteList(list)}
             >
               <Surface 
-                style={entryStyles.card} 
-                elevation={1}
+                style={[entryStyles.card, { backgroundColor: colors.background }]}
+                elevation={0}
               >
                 <TouchableOpacity onPress={() => handleListSelect(list)} style={{width: '100%'}}>
                     <View style={entryStyles.cardContent}>
                       <View style={entryStyles.infoContainer}>
                           <View style={entryStyles.textContainer}>
-                          <Text style={entryStyles.title}>{list.name}</Text>
-                          {list.description && <Text style={entryStyles.subtitle}>{list.description}</Text>}
+                          <Text style={[typography.subheader, { color: colors.text }]}>{list.name}</Text>
+                          {list.description && <Text style={[typography.body, { color: colors.text }]}>{list.description}</Text>}
                           </View>
-                      </View>
-                      <View style={entryStyles.actionsContainer}>
-                          <Button
-                          mode="contained"
-                          onPress={() => handleListSelect(list)}
-                          style={entryStyles.actionButton}
-                          labelStyle={{textTransform: 'uppercase'}}
-                          >
-                          {i18n.t('open')}
-                          </Button>
                       </View>
                     </View>
                 </TouchableOpacity>
               </Surface>
+              {!isLastItem && <UnifiedSeperator/>}
             </SwipeableListCard>
           );
         })}
-        <TouchableOpacity onPress={handleAddList} disabled={isLoading}>
-          <Surface 
-            style={entryStyles.card} 
-            elevation={1}
-          >
-            <IconButton icon="plus" size={24} />
-            <Text style={entryStyles.addButtonText}>
-              {i18n.t('add_list')}
-            </Text>
-          </Surface>
-        </TouchableOpacity>
+        <UnifiedAddButton onPress={handleAddList} onLongPress={handleAddList} />
       </ScrollView>
       <UnifiedFooter />
     </SafeAreaWrapper>

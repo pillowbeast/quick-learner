@@ -23,6 +23,7 @@ export default function Home() {
     <SafeAreaWrapper backgroundColor={colors.background}>
       <UnifiedHeader 
         title={i18n.t('app_name')}
+        backButton={false}
         actions={
             <>
               <IconButton

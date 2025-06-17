@@ -11,9 +11,11 @@ import { typography, spacing, radii } from '@/styles/tokens';
 interface UnifiedHeaderProps {
   title: string;
   actions?: ReactNode;
+  backButton?: boolean;
+  settingsButton?: boolean;
 }
 
-export default function UnifiedHeader({ title, actions }: UnifiedHeaderProps) {
+export default function UnifiedHeader({ title = 'Title', actions = <></>, backButton = true, settingsButton = true }: UnifiedHeaderProps) {
   const { goToOnboarding, goToSettings, goBack } = useNavigationHelper();
   const { theme, colors } = useAppTheme();
 
@@ -21,21 +23,27 @@ export default function UnifiedHeader({ title, actions }: UnifiedHeaderProps) {
     <View>
       <View style={[styles.headerContainer, { backgroundColor: colors.background }]}>
         <View style={styles.topRowContainer}>
-          <IconButton
-            icon="arrow-left"
-            size={24}
-            onPress={goBack}
-            iconColor={colors.secondary}
-          />
-          <IconButton
-            icon="cog"
-            size={24}
-            onPress={goToSettings}
-            iconColor={colors.secondary}
-          />
+          {backButton ? (
+            <IconButton
+              icon="arrow-left"
+              size={24}
+              onPress={goBack}
+              iconColor={colors.secondary}
+            />
+          ) : (
+            <View/>
+          )}
+          {settingsButton && (
+            <IconButton
+              icon="cog"
+              size={24}
+              onPress={goToSettings}
+                iconColor={colors.secondary}
+              />
+          )}
         </View>
         <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
+          <Text style={[typography.header, { color: colors.primary }]}>{title}</Text>
         </View>
         {actions && (
           <View style={styles.actionsContainer}>
@@ -59,18 +67,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  topActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   titleContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: typography.header.fontSize,
-    fontWeight: typography.header.fontWeight,
-    textAlign: 'left',
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -78,11 +77,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.md,
     minHeight: 40,
-  },
-  bottomRow: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
   },
 }); 

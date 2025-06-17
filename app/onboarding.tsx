@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { Text, Surface, Button } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { Text, Button } from 'react-native-paper';
 import Carousel from 'react-native-reanimated-carousel';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import i18n from '@/i18n';
 
+import { useNavigationHelper } from '@/hooks/useNavigation';
+import i18n from '@/i18n';
 import { useAppTheme } from '@/styles/ThemeContext';
+import SafeAreaWrapper from '@/components/SafeAreaWrapper';
+import { typography } from '@/styles/tokens';
 
 const { width } = Dimensions.get('window');
 const ONBOARDING_KEY = '@quick_learner_onboarding_complete';
@@ -42,77 +44,78 @@ const slides: Slide[] = [
 ];
 
 export default function Onboarding() {
-    const router = useRouter();
+    const { goHomeReplace } = useNavigationHelper();
     const [currentIndex, setCurrentIndex] = useState(0);
     const { colors } = useAppTheme();
 
     const handleComplete = async () => {
         try {
             await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
-            router.replace('/home');
+            goHomeReplace();
         } catch (error) {
             console.error('Error saving onboarding status:', error);
             // Still navigate to home even if saving fails
-            router.replace('/home');
+            goHomeReplace();
         }
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <Carousel
-                loop={false}
-                width={width}
-                height={400}
-                data={slides}
-                onSnapToItem={setCurrentIndex}
-                renderItem={({ item }) => (
-                    <View style={styles.slide}>
-                        <MaterialCommunityIcons
-                            name={item.icon}
-                            size={64}
-                            color={colors.primary}
-                            style={styles.icon}
-                        />
-                        <Text variant="headlineMedium" style={styles.title}>
-                            {item.title}
-                        </Text>
-                        <Text variant="bodyLarge" style={styles.description}>
-                            {item.description}
-                        </Text>
+        <SafeAreaWrapper backgroundColor={colors.background}>
+            <View style={styles.carousel}>
+                <Carousel
+                    loop={false}
+                    width={width}
+                    data={slides}
+                    onSnapToItem={setCurrentIndex}
+                    renderItem={({ item }) => (
+                        <View style={styles.slide}>
+                            <MaterialCommunityIcons
+                                name={item.icon}
+                                size={64}
+                                color={colors.primary}
+                                style={styles.icon}
+                            />
+                            <Text style={[typography.subheader, { color: colors.text, textAlign: 'center' }]}>
+                                {item.title}
+                            </Text>
+                            <Text style={[typography.body, { color: colors.text, textAlign: 'center' }]}>
+                                {item.description}
+                            </Text>
+                        </View>
+                    )}
+                />
+                <View style={styles.footer}>
+                    <View style={styles.pagination}>
+                        {slides.map((_, index) => (
+                            <View
+                                key={index}
+                                style={[
+                                    styles.paginationDot,
+                                    {
+                                        backgroundColor:
+                                            currentIndex === index
+                                                ? colors.primary
+                                                : colors.muted,
+                                    },
+                                ]}
+                            />
+                        ))}
                     </View>
-                )}
-            />
-            <View style={styles.footer}>
-                <View style={styles.pagination}>
-                    {slides.map((_, index) => (
-                        <View
-                            key={index}
-                            style={[
-                                styles.paginationDot,
-                                {
-                                    backgroundColor:
-                                        currentIndex === index
-                                            ? colors.primary
-                                            : colors.muted,
-                                },
-                            ]}
-                        />
-                    ))}
+                    <Button
+                        mode="contained"
+                        onPress={handleComplete}
+                        style={styles.button}
+                    >
+                        {i18n.t('got_it')}
+                    </Button>
                 </View>
-                <Button
-                    mode="contained"
-                    onPress={handleComplete}
-                    style={styles.button}
-                >
-                    {i18n.t('got_it')}
-                </Button>
             </View>
-        </View>
+        </SafeAreaWrapper>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    carousel: {
         flex: 1,
     },
     slide: {
@@ -134,8 +137,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     footer: {
-        position: 'absolute',
-        bottom: 40,
+        bottom: 100,
+        height: 150,
         left: 0,
         right: 0,
         alignItems: 'center',

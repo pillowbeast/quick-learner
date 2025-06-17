@@ -5,13 +5,18 @@ import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useDatabase } from '@/hooks/useDatabase';
 import Flag from '@/components/Flag';
 import { useFocusEffect } from '@react-navigation/native';
+
 import { useNavigationContext, Language } from '@/hooks/useNavigationContext';
 import i18n from '@/i18n';
+import { typography, spacing, radii } from '@/styles/tokens';
 import { logger } from '@/utils/logger';
+import { useAppTheme } from '@/styles/ThemeContext';
 import { entryStyles } from "@/styles/entryStyles";
-import AddButton from '@/components/AddButton';
+import UnifiedAddButton from '@/components/UnifiedAddButton';
+import UnifiedSeperator from '@/components/UnifiedSeperator';
 
 export default function LanguageSelector() {
+  const { colors, theme } = useAppTheme();
   const { goToLanguage, goToAddLanguage } = useNavigationHelper();
   const { setCurrentLanguage } = useNavigationContext();
   const database = useDatabase();
@@ -87,9 +92,9 @@ export default function LanguageSelector() {
 
   if (database.isLoading) {
     return (
-      <View style={[styles.loadingContainer]}>
+      <View style={[entryStyles.loadingContainer]}>
         <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>{i18n.t('loading_database')}</Text>
+        <Text style={[typography.caption]}>{i18n.t('loading_database')}</Text>
       </View>
     );
   }
@@ -97,38 +102,32 @@ export default function LanguageSelector() {
   return (
     <View style={entryStyles.container}>
       {userLanguages.map((language) => (
-        <Surface 
-          key={language.uuid} 
-          style={entryStyles.card} 
-          elevation={1}
+        <View
+          key={language.uuid}
         >
-          <TouchableOpacity onPress={() => handleLanguageSelect(language)} style={{width: '100%'}}>
-            <View style={entryStyles.cardContent}>
-              <View style={entryStyles.infoContainer}>
-                <Flag iso={language.iso} />
-                <View style={entryStyles.textContainer}>
-                  <Text style={entryStyles.title}>{language.name}</Text>
+          <Surface
+            style={[entryStyles.card, { backgroundColor: colors.background } ]}
+            elevation={0}
+          >
+            <TouchableOpacity onPress={() => handleLanguageSelect(language)} style={{width: '100%'}}>
+              <View style={entryStyles.cardContent}>
+                <View style={entryStyles.infoContainer}>
+                  <Flag iso={language.iso} />
+                  <View style={entryStyles.textContainer}>
+                    <Text style={[typography.subheader, { color: colors.text }]}>{language.name}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        </Surface>
+            </TouchableOpacity>
+          </Surface>
+          <UnifiedSeperator />
+        </View>
       ))}
-      <AddButton onPress={goToAddLanguage} onLongPress={showDevMenu} />
+      <UnifiedAddButton onPress={goToAddLanguage} onLongPress={showDevMenu} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-  },
+
 });

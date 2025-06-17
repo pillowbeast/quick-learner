@@ -1,6 +1,9 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import CountryFlag from "react-native-country-flag";
+import { Surface } from 'react-native-paper';
+
+import { useAppTheme } from "@/styles/ThemeContext";
 
 // Map language codes to country codes
 const languageToCountryCode: { [key: string]: string } = {
@@ -13,18 +16,28 @@ const languageToCountryCode: { [key: string]: string } = {
 };
 
 export default function Flag({ iso }: { iso: string }) {
+    const {colors, theme } = useAppTheme();
     const countryCode = languageToCountryCode[iso.toLowerCase()] || iso.toLowerCase();
     return (
-        <View style={styles.container}>
-            <CountryFlag isoCode={countryCode} size={30} />
+        <View>
+            <Surface 
+                style={[styles.surface, { shadowColor: colors.success }]}
+                elevation={4}
+            >
+                <CountryFlag 
+                    isoCode={countryCode}
+                    size={32}
+                    style={{ backgroundColor: 'transparent' }} />
+            </Surface>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    surface: {
         justifyContent: "center",
         alignItems: "center",
         padding: 2,
+        backgroundColor: 'transparent',
     },
 });

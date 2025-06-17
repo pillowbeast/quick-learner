@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
-import { Text, Surface, Button, ActivityIndicator } from 'react-native-paper';
+import { Text, Surface, Button, ActivityIndicator, IconButton } from 'react-native-paper';
 
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useDatabase } from '@/hooks/useDatabase.tsx';
@@ -16,6 +16,9 @@ import { languageConfigs } from '@/types/languages';
 
 import i18n from '@/i18n';
 import { entryStyles } from '@/styles/entryStyles';
+import { useAppTheme } from '@/styles/ThemeContext';
+import { typography } from '@/styles/tokens';
+import UnifiedSeperator from '@/components/UnifiedSeperator';
 
 interface InitialWord {
   word: string;
@@ -31,6 +34,7 @@ interface LanguageConfigWithInitialWords {
 export default function AddLanguagePage() {
   const { goHomeReplace } = useNavigationHelper();
   const database = useDatabase();
+  const { colors } = useAppTheme();
 
   const [existingLanguages, setExistingLanguages] = useState<Language[]>([]);
   const [isAdding, setIsAdding] = useState<string | null>(null);
@@ -108,39 +112,47 @@ export default function AddLanguagePage() {
   }
 
   return (
-    <SafeAreaWrapper >
-      <UnifiedHeader title={i18n.t('add_language')} />
+    <SafeAreaWrapper backgroundColor={colors.background}>
+      <UnifiedHeader
+        title={i18n.t('add_language')}
+        backButton={true}
+        actions={
+          <></> } />
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        {availableLanguages.map((language) => {
+        {availableLanguages.map((language, index) => {
           const isAdded = existingLanguages.some(existing => existing.iso === language.iso);
+          const isLastItem = index === availableLanguages.length - 1;
           return (
-            <Surface
-              key={language.iso}
-              style={[entryStyles.card, { opacity: isAdded ? 0.7 : 1 }]}
-              elevation={1}
-            >
-              { !isAdded ? (
-                <TouchableOpacity onPress={() => handleAddLanguage(language.iso, language.name)} style={{width: '100%'}}>
-                <View style={entryStyles.cardContent}>
-                  <View style={entryStyles.infoContainer}>
-                    <Flag iso={language.iso} />
-                    <View style={entryStyles.textContainer}>
-                      <Text style={entryStyles.title}>{language.name}</Text>
+            <View key={language.iso}>
+              <Surface
+                key={language.iso}
+                style={[entryStyles.card, { opacity: isAdded ? 0.7 : 1, backgroundColor: colors.background }]}
+                elevation={0}
+              >
+                { !isAdded ? (
+                  <TouchableOpacity onPress={() => handleAddLanguage(language.iso, language.name)} style={{width: '100%'}}>
+                  <View style={entryStyles.cardContent}>
+                    <View style={entryStyles.infoContainer}>
+                      <Flag iso={language.iso} />
+                      <View style={entryStyles.textContainer}>
+                        <Text style={[typography.subheader, { color: colors.text }]}>{language.name}</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-              ) : (
-                <View style={entryStyles.cardContent}>
-                  <View style={entryStyles.infoContainer}>
-                    <Flag iso={language.iso} />
-                    <View style={entryStyles.textContainer}>
-                      <Text style={entryStyles.title}>{language.name}</Text>
+                </TouchableOpacity>
+                ) : (
+                  <View style={entryStyles.cardContent}>
+                    <View style={entryStyles.infoContainer}>
+                      <Flag iso={language.iso} />
+                      <View style={entryStyles.textContainer}>
+                        <Text style={[typography.subheader, { color: colors.muted }]}>{language.name}</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              )}
-            </Surface>
+                )}
+              </Surface>
+              {!isLastItem && <UnifiedSeperator />}
+            </View>
           );
         })}
       </ScrollView>

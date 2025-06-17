@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { Button } from '@/components/button';
+import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+
+import { Button } from '@/components/button';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
+import UnifiedHeader from '@/components/UnifiedHeader';
+import i18n from '@/i18n';
+import { useAppTheme } from '@/styles/ThemeContext';
 
 const API_KEY_STORAGE_KEY = 'openai_api_key';
 
 export default function SettingsScreen() {
+  const { colors } = useAppTheme();
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const { goBack } = useNavigationHelper();
@@ -100,16 +105,21 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaWrapper>
-      <View style={styles.container}>
-        <Text style={styles.title}>Settings</Text>
-        
+    <SafeAreaWrapper backgroundColor={colors.background}>
+      <UnifiedHeader
+        title={i18n.t('settings')}
+        backButton={true}
+        settingsButton={false}
+        actions={
+          <></>
+        }
+      />
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>OpenAI API Key</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('openai_api_key')}</Text>
           <Text style={styles.description}>
-            Enter your OpenAI API key to enable sentence generation. Your key is stored securely on your device.
+            {i18n.t('openai_api_key_explanation')}
           </Text>
-          
           <TextInput
             style={styles.input}
             value={apiKey}
@@ -123,21 +133,28 @@ export default function SettingsScreen() {
           <View style={styles.buttonContainer}>
             <Button
               onPress={handleSaveApiKey}
-              style={styles.button}
+              style={{
+                flex: 1,
+                backgroundColor: colors.primary,
+              }}
+              textStyle={{ color: colors.onPrimaryOrSecondary }}
               disabled={!apiKey}
             >
-              Save API Key
+              {i18n.t('save_api_key')}
             </Button>
-            
             <Button
               onPress={handleClearApiKey}
-              style={styles.clearButton}
+              style={{
+                flex: 1,
+                backgroundColor: colors.error,
+              }}
+              textStyle={{ color: colors.onPrimaryOrSecondary }}
             >
-              Clear API Key
+              {i18n.t('clear_api_key')}
             </Button>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaWrapper>
   );
 }
@@ -146,13 +163,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    marginTop: 60, // Add space for the back button
+  contentContainer: {
+    flexGrow: 1,
   },
   section: {
     marginBottom: 20,
@@ -178,12 +191,5 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     gap: 10,
-  },
-  button: {
-    flex: 1,
-  },
-  clearButton: {
-    flex: 1,
-    backgroundColor: '#ff4444',
   },
 }); 

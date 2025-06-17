@@ -1,59 +1,52 @@
 import { StyleSheet } from 'react-native';
+import { typography, spacing, radii } from './tokens';
 
 export const entryStyles = StyleSheet.create({
+  // For all Loading Containers
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+
   container: {
     flexDirection: 'column',
     width: '100%',
-  },
+    },
   card: {
     flexDirection: 'column', // Main content in a column
     alignItems: 'flex-start', // Align content to the start
     justifyContent: 'center',
     height: 72,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingTop: 20,
+    paddingBottom: 20,
     paddingLeft: 32,
     paddingRight: 32,
-    marginVertical: 8,
-    marginHorizontal: 0,
   },
   cardContent: {
     width: '100%',
-    flexDirection: 'row', // For icon/flag and text content
-    alignItems: 'center',
-    justifyContent: 'space-between', // Pushes actions to the right
-  },
-  infoContainer: { // Container for flag/icon and text
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1, // Allow this to take available space
-    marginRight: 8, // Space before action buttons
+    justifyContent: 'space-between',
   },
-  textContainer: { // For Name/Title and Subtitle/Description
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  textContainer: {
     flexDirection: 'column',
-    marginLeft: 12, // Space after flag/icon
-    flex: 1, // Allow text to take available space and wrap
+    marginLeft: 12,
+    flex: 1,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    // Add other title styles
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    // Add other subtitle styles
-  },
-  actionsContainer: { // For buttons like View, Edit, Delete
+  actionsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   actionButton: {
     marginLeft: 8,
-  },
-  iconButton: {
-    margin: 0,
-    padding: 0,
   },
   addButtonText: {
     fontSize: 16,

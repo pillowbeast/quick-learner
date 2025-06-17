@@ -148,4 +148,11 @@ export default {
     enter_openai_api_key: "Enter OpenAI API Key",
     api_key_explanation: "To use the sentence practice feature, you need to provide an OpenAI API key. You can get one from platform.openai.com.",
     save: "Save",
+
+    // Settings
+    settings: "Settings",
+    openai_api_key: "OpenAI API Key",
+    openai_api_key_explanation: "To use the sentence practice feature, you need to provide an OpenAI API key. You can get one from platform.openai.com.",
+    save_api_key: "Save API Key",
+    clear_api_key: "Clear API Key",
 }; 

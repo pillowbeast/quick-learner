@@ -3,8 +3,10 @@ import { StyleSheet, I18nManager, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
 import ReanimatedSwipeable, { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { IconButton, Text } from 'react-native-paper';
-import i18n from '@/i18n';
 import Animated, { SharedValue, useAnimatedStyle, interpolate, Extrapolate } from 'react-native-reanimated';
+
+import i18n from '@/i18n';
+import { typography } from '@/styles/tokens';
 import { useAppTheme } from '@/styles/ThemeContext';
 
 interface SwipeableListCardProps {
@@ -33,15 +35,15 @@ export default function SwipeableListCard({ children, onSwipeLeft, onSwipeRight,
       <RectButton 
         style={[
             I18nManager.isRTL ? styles.rightAction : styles.leftAction, 
-            { backgroundColor: colors.primary }
+            { backgroundColor: colors.secondary }
         ]} 
         onPress={() => {
             onSwipeLeft?.();
             swipeableMethods.close();
         }}>
         <Animated.View style={[styles.actionContent, animatedStyle]}>
-            <IconButton icon="pencil" iconColor={colors.text} size={20} style={styles.actionIcon}/>
-            <Text style={[styles.actionText, {color: colors.text}]}>{i18n.t('edit_list')}</Text>
+            <IconButton icon="pencil" iconColor={colors.onPrimaryOrSecondary} size={20} style={styles.actionIcon}/>
+            <Text style={[typography.body, {color: colors.onPrimaryOrSecondary}]}>{i18n.t('edit_list')}</Text>
         </Animated.View>
       </RectButton>
     );
@@ -63,15 +65,15 @@ export default function SwipeableListCard({ children, onSwipeLeft, onSwipeRight,
       <RectButton 
         style={[
             I18nManager.isRTL ? styles.leftAction : styles.rightAction, 
-            { backgroundColor: colors.accent }
+            { backgroundColor: colors.error }
         ]} 
         onPress={() => {
             onSwipeRight?.();
             swipeableMethods.close();
         }}>
         <Animated.View style={[styles.actionContent, animatedStyle]}>
-            <IconButton icon="delete" iconColor={colors.text} size={20} style={styles.actionIcon}/>
-            <Text style={[styles.actionText, {color: colors.text}]}>{i18n.t('delete')}</Text>
+            <IconButton icon="delete" iconColor={colors.onPrimaryOrSecondary} size={20} style={styles.actionIcon}/>
+            <Text style={[typography.body, {color: colors.onPrimaryOrSecondary}]}>{i18n.t('delete')}</Text>
         </Animated.View>
       </RectButton>
     );
@@ -95,8 +97,6 @@ export default function SwipeableListCard({ children, onSwipeLeft, onSwipeRight,
 
 const styles = StyleSheet.create({
   swipeableContainer: {
-    marginVertical: 8, 
-    borderRadius: 12, 
     overflow: 'hidden', 
   },
   leftAction: {
@@ -118,10 +118,4 @@ const styles = StyleSheet.create({
   actionIcon: {
     margin: 0, 
   },
-  actionText: {
-    fontSize: 14,
-    marginLeft: I18nManager.isRTL ? 0 : 5, 
-    marginRight: I18nManager.isRTL ? 5 : 0,
-    fontWeight: '600'
-  }
 }); 
