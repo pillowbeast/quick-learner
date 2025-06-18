@@ -1,5 +1,5 @@
 import React from "react";
-import { View, ScrollView, StyleSheet, Button } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { IconButton } from 'react-native-paper';
 
 import i18n from "@/i18n";

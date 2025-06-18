@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, View } from "react-native";
+import { TouchableOpacity, View, StyleSheet } from "react-native";
 import { IconButton, Surface } from "react-native-paper";
 
 import { entryStyles } from "@/styles/entryStyles";
@@ -14,14 +14,14 @@ export default function UnifiedAddButton({ onPress, onLongPress }: AddButtonProp
   const { colors } = useAppTheme()
   return (
     <Surface 
-      style={[entryStyles.card, { backgroundColor: colors.background } ]}
+      style={[entryStyles.card, {backgroundColor: colors.background}]}
       elevation={0}
     >
       <TouchableOpacity onPress={onPress} onLongPress={onLongPress} style={{width: '100%'}}>
-        <View style={entryStyles.cardContent}>
+        <View style={entryStyles.cardRowContent}>
           <View style={{justifyContent: 'center', alignItems: 'center', width: '100%'}}>
             <IconButton 
-              icon="plus" 
+              icon="plus-circle" 
               size={24} 
               iconColor={colors.secondary}
             />
@@ -31,4 +31,8 @@ export default function UnifiedAddButton({ onPress, onLongPress }: AddButtonProp
     </Surface>
   )
 }
+
+const styles = StyleSheet.create({
+
+});
 

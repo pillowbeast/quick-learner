@@ -104,9 +104,9 @@ export default function AddLanguagePage() {
 
   if (database.isLoading || isLoading) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
+      <View style={[entryStyles.loadingContainer]}>
         <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>{i18n.t('loading_languages')}</Text>
+        <Text style={[typography.caption, {color: colors.text}]}>{i18n.t('loading_languages')}</Text>
       </View>
     );
   }
@@ -131,7 +131,7 @@ export default function AddLanguagePage() {
               >
                 { !isAdded ? (
                   <TouchableOpacity onPress={() => handleAddLanguage(language.iso, language.name)} style={{width: '100%'}}>
-                  <View style={entryStyles.cardContent}>
+                  <View style={entryStyles.cardRowContent}>
                     <View style={entryStyles.infoContainer}>
                       <Flag iso={language.iso} />
                       <View style={entryStyles.textContainer}>
@@ -141,7 +141,7 @@ export default function AddLanguagePage() {
                   </View>
                 </TouchableOpacity>
                 ) : (
-                  <View style={entryStyles.cardContent}>
+                  <View style={entryStyles.cardRowContent}>
                     <View style={entryStyles.infoContainer}>
                       <Flag iso={language.iso} />
                       <View style={entryStyles.textContainer}>
@@ -167,10 +167,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingVertical: 8,
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   loadingText: {
     marginTop: 16,

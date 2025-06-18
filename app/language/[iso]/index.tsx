@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, View, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
-import { Text, Surface, Button, ActivityIndicator, IconButton } from 'react-native-paper';
+import { Text, Surface, Button, ActivityIndicator, IconButton, TextInput } from 'react-native-paper';
 import React from 'react';
 import { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable'; 
 
@@ -14,10 +14,11 @@ import UnifiedHeader from "@/components/UnifiedHeader";
 import UnifiedFooter from "@/components/UnifiedFooter";
 import { entryStyles } from "@/styles/entryStyles";
 import SwipeableListCard from "@/components/SwipeableListCard";
-import { typography } from '@/styles/tokens';
+import { spacing, typography } from '@/styles/tokens';
 import { useAppTheme } from '@/styles/ThemeContext';
 import UnifiedSeperator from '@/components/UnifiedSeperator';
 import UnifiedAddButton from '@/components/UnifiedAddButton';
+import UnifiedDialog from '@/components/UnifiedDialog';
 
 export default function LanguagePage() {
   const { state, setCurrentList, setCurrentLanguage } = useNavigationContext();
@@ -26,6 +27,7 @@ export default function LanguagePage() {
   const { colors } = useAppTheme();
   const [newListName, setNewListName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isDialogVisible, setDialogVisible] = useState(false);
 
   useEffect(() => {
     const loadLists = async () => {
@@ -75,23 +77,13 @@ export default function LanguagePage() {
   };
 
   const handleAddList = async () => {
-    if (Platform.OS !== 'web') {
-      Alert.prompt(
-        i18n.t('add_list'),
-        i18n.t('enter_list_name'),
-        [
-          { text: i18n.t('cancel'), style: 'cancel' },
-          { text: i18n.t('add'), onPress: (name) => addListLogic(name || "") }
-        ],
-        'plain-text',
-        newListName
-      );
-    } else {
-      const nameFromPrompt = prompt(i18n.t('enter_list_name'), newListName);
-      if (nameFromPrompt !== null) {
-        addListLogic(nameFromPrompt);
-      }
-    }
+    setNewListName(''); // Reset input
+    setDialogVisible(true);
+  };
+
+  const handleDialogSubmit = () => {
+    addListLogic(newListName);
+    setDialogVisible(false);
   };
 
   const handleListSelect = (list: typeof state.currentList) => {
@@ -147,8 +139,8 @@ export default function LanguagePage() {
   if (!state.currentLanguage) {
     return (
         <SafeAreaWrapper backgroundColor={colors.background}>
-            <View style={styles.loadingContainer}>
-                <Text>Error: No language selected.</Text>
+            <View style={entryStyles.loadingContainer}>
+                <Text style={[typography.caption, {color: colors.text}]}>{i18n.t('error_no_language_selected')}</Text>
             </View>
         </SafeAreaWrapper>
     );
@@ -161,9 +153,9 @@ export default function LanguagePage() {
         <UnifiedHeader 
           title={state.currentLanguage.name}
         />
-        <View style={styles.loadingContainer}>
+        <View style={entryStyles.loadingContainer}>
           <ActivityIndicator size="large" />
-          <Text style={styles.loadingText}>{i18n.t('loading_lists')}</Text>
+          <Text style={[typography.caption, {color: colors.text}]}>{i18n.t('loading_lists')}</Text>
         </View>
       </SafeAreaWrapper>
     );
@@ -171,10 +163,27 @@ export default function LanguagePage() {
 
   return (
     <SafeAreaWrapper backgroundColor={colors.background}>
+      <UnifiedDialog
+          visible={isDialogVisible}
+          onDismiss={() => setDialogVisible(false)}
+          title={i18n.t('add_list')}
+          actions={
+              <>
+              </>
+            }
+          >
+          <TextInput
+              label={i18n.t('enter_list_name')}
+              value={newListName}
+              onChangeText={setNewListName}
+              textColor={colors.accent}
+              autoFocus
+            />
+      </UnifiedDialog>
       <UnifiedHeader 
         title={state.currentLanguage.name}
       />
-      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContentContainer}>
+      <ScrollView style={{flex: 1}} contentContainerStyle={styles.scrollContentContainer}>
         {state.currentLanguage.lists?.map((list, index) => {
           const listSwipeableRef = React.createRef<SwipeableMethods>();
           const isLastItem = index === (state.currentLanguage?.lists?.length || 0) - 1;
@@ -187,18 +196,20 @@ export default function LanguagePage() {
               onSwipeRight={() => handleDeleteList(list)}
             >
               <Surface 
-                style={[entryStyles.card, { backgroundColor: colors.background }]}
+                style={[entryStyles.card, {backgroundColor: colors.background}]}
                 elevation={0}
               >
-                <TouchableOpacity onPress={() => handleListSelect(list)} style={{width: '100%'}}>
-                    <View style={entryStyles.cardContent}>
-                      <View style={entryStyles.infoContainer}>
-                          <View style={entryStyles.textContainer}>
-                          <Text style={[typography.subheader, { color: colors.text }]}>{list.name}</Text>
-                          {list.description && <Text style={[typography.body, { color: colors.text }]}>{list.description}</Text>}
-                          </View>
-                      </View>
+                <TouchableOpacity
+                  onPress={() => handleListSelect(list)}
+                  onLongPress={() => Alert.alert(list.name, list.description || '')}
+                  style={{width: '100%', flex: 1}}
+                >
+                  <View style={entryStyles.cardRowContent}>
+                    <View style={entryStyles.cardColumnContent}>
+                      <Text style={[typography.subheader, { color: colors.text }]} numberOfLines={1}>{list.name}</Text>
+                      {list.description && <Text style={[typography.caption, { color: colors.text }]} numberOfLines={2}>{list.description}</Text>}
                     </View>
+                  </View>
                 </TouchableOpacity>
               </Surface>
               {!isLastItem && <UnifiedSeperator/>}
@@ -215,18 +226,5 @@ export default function LanguagePage() {
 const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingVertical: 8,
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
   },
 });

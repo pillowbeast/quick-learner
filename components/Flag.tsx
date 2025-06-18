@@ -4,6 +4,7 @@ import CountryFlag from "react-native-country-flag";
 import { Surface } from 'react-native-paper';
 
 import { useAppTheme } from "@/styles/ThemeContext";
+import { spacing } from "@/styles/tokens";
 
 // Map language codes to country codes
 const languageToCountryCode: { [key: string]: string } = {
@@ -21,12 +22,12 @@ export default function Flag({ iso }: { iso: string }) {
     return (
         <View>
             <Surface 
-                style={[styles.surface, { shadowColor: colors.success }]}
+                style={[styles.surface, { shadowColor: colors.text }]}
                 elevation={4}
             >
                 <CountryFlag 
                     isoCode={countryCode}
-                    size={32}
+                    size={spacing.xxl}
                     style={{ backgroundColor: 'transparent' }} />
             </Surface>
         </View>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-import { Button } from '@/components/button';
+import { Button } from '@/components/UnifiedButton';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 import UnifiedHeader from '@/components/UnifiedHeader';

@@ -1,18 +1,22 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button } from 'react-native-paper';
 import { Link, Stack } from 'expo-router';
+
 import { useNavigationHelper } from '@/hooks/useNavigation';
+import { Button } from '@/components/UnifiedButton';
+import { useAppTheme } from '@/styles/ThemeContext';
+import i18n from '@/i18n';
 
 export default function NotFoundScreen() {
   const { goHomeReplace } = useNavigationHelper();
+  const { colors } = useAppTheme();
 
   return (
     <>
       <Stack.Screen options={{ title: 'Oops! Not Found' }} />
       <View style={styles.container}>
-        <Button mode="contained" onPress={goHomeReplace}>
-          Go to Home
+        <Button onPress={goHomeReplace} style={{backgroundColor: colors.accent}} textStyle={{color: colors.text}}>
+          {i18n.t('go_to_home')}
         </Button>
       </View>
     </>
@@ -25,11 +29,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#25292e',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  button: {
-    fontSize: 20,
-    textDecorationLine: 'underline',
-    color: '#fff',
   },
 });

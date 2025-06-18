@@ -600,11 +600,6 @@ const styles = StyleSheet.create({
   flatListContentContainer: {
     paddingVertical: 8,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',

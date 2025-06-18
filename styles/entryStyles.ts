@@ -15,20 +15,28 @@ export const entryStyles = StyleSheet.create({
     width: '100%',
     },
   card: {
-    flexDirection: 'column', // Main content in a column
-    alignItems: 'flex-start', // Align content to the start
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    height: 72,
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingLeft: 32,
-    paddingRight: 32,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.md,
+    backgroundColor: 'red',
   },
-  cardContent: {
+  cardRowContent: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingLeft: spacing.md,
+    paddingRight: spacing.md,
+    backgroundColor: 'blue',
+  },
+  cardColumnContent: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   infoContainer: {
     flexDirection: 'row',

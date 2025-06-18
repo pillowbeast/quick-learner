@@ -1,3 +1,4 @@
+import { radii, spacing, typography } from '@/styles/tokens';
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
@@ -29,17 +30,15 @@ export function Button({ onPress, children, style, textStyle, disabled }: Button
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: typography.body.fontSize,
+    fontWeight: typography.body.fontWeight,
   },
   disabled: {
     opacity: 0.5,

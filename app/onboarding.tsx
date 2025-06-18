@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import Carousel from 'react-native-reanimated-carousel';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,7 +9,8 @@ import { useNavigationHelper } from '@/hooks/useNavigation';
 import i18n from '@/i18n';
 import { useAppTheme } from '@/styles/ThemeContext';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
-import { typography } from '@/styles/tokens';
+import { spacing, typography } from '@/styles/tokens';
+import { Button } from '@/components/UnifiedButton';
 
 const { width } = Dimensions.get('window');
 const ONBOARDING_KEY = '@quick_learner_onboarding_complete';
@@ -84,31 +85,31 @@ export default function Onboarding() {
                         </View>
                     )}
                 />
-                <View style={styles.footer}>
-                    <View style={styles.pagination}>
-                        {slides.map((_, index) => (
-                            <View
-                                key={index}
-                                style={[
-                                    styles.paginationDot,
-                                    {
-                                        backgroundColor:
-                                            currentIndex === index
-                                                ? colors.primary
-                                                : colors.muted,
-                                    },
-                                ]}
-                            />
-                        ))}
-                    </View>
-                    <Button
-                        mode="contained"
-                        onPress={handleComplete}
-                        style={styles.button}
-                    >
-                        {i18n.t('got_it')}
-                    </Button>
+            </View>
+            <View style={styles.footer}>
+                <View style={styles.pagination}>
+                    {slides.map((_, index) => (
+                        <View
+                            key={index}
+                            style={[
+                                styles.paginationDot,
+                                {
+                                    backgroundColor:
+                                        currentIndex === index
+                                            ? colors.primary
+                                            : colors.muted,
+                                },
+                            ]}
+                        />
+                    ))}
                 </View>
+                <Button
+                    onPress={handleComplete}
+                    style={{backgroundColor: colors.primary, width: '80%'}}
+                    textStyle={{color: colors.onPrimaryOrSecondary}}
+                >
+                    {i18n.t('got_it')}
+                </Button>
             </View>
         </SafeAreaWrapper>
     );
@@ -137,11 +138,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     footer: {
-        bottom: 100,
-        height: 150,
-        left: 0,
-        right: 0,
         alignItems: 'center',
+        paddingBottom: spacing.xl,
     },
     pagination: {
         flexDirection: 'row',
@@ -152,8 +150,5 @@ const styles = StyleSheet.create({
         height: 8,
         borderRadius: 4,
         marginHorizontal: 4,
-    },
-    button: {
-        width: '80%',
     },
 }); 

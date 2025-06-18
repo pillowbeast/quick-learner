@@ -94,35 +94,35 @@ export default function LanguageSelector() {
     return (
       <View style={[entryStyles.loadingContainer]}>
         <ActivityIndicator size="large" />
-        <Text style={[typography.caption]}>{i18n.t('loading_database')}</Text>
+        <Text style={[typography.caption, {color: colors.text}]}>{i18n.t('loading_database')}</Text>
       </View>
     );
   }
 
   return (
     <View style={entryStyles.container}>
-      {userLanguages.map((language) => (
+      {userLanguages.map((language, index) => {
+        const isLastItem = index === (userLanguages?.length || 0) - 1;
+        return (
         <View
           key={language.uuid}
         >
           <Surface
-            style={[entryStyles.card, { backgroundColor: colors.background } ]}
+            style={[entryStyles.card, {backgroundColor: colors.background}]}
             elevation={0}
           >
             <TouchableOpacity onPress={() => handleLanguageSelect(language)} style={{width: '100%'}}>
-              <View style={entryStyles.cardContent}>
-                <View style={entryStyles.infoContainer}>
-                  <Flag iso={language.iso} />
-                  <View style={entryStyles.textContainer}>
-                    <Text style={[typography.subheader, { color: colors.text }]}>{language.name}</Text>
-                  </View>
+              <View style={entryStyles.cardRowContent}>
+                <Flag iso={language.iso} />
+                <View style={entryStyles.textContainer}>
+                  <Text style={[typography.subheader, { color: colors.text }]}>{language.name}</Text>
                 </View>
               </View>
             </TouchableOpacity>
           </Surface>
-          <UnifiedSeperator />
+          {!isLastItem && <UnifiedSeperator/>}
         </View>
-      ))}
+      )})}
       <UnifiedAddButton onPress={goToAddLanguage} onLongPress={showDevMenu} />
     </View>
   );
