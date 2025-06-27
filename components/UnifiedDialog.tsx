@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useAppTheme } from '@/styles/ThemeContext';
 
@@ -19,12 +19,7 @@ export default function UnifiedDialog({ visible, onDismiss, title, children, act
   }
   
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onDismiss}
-    >
+    <View style={styles.overlay}>
       <Pressable onPress={onDismiss} style={styles.container}>
         <BlurView style={styles.absolute} intensity={30} tint="dark" />
         <Pressable onPress={(e) => e.stopPropagation()}>
@@ -39,16 +34,32 @@ export default function UnifiedDialog({ visible, onDismiss, title, children, act
           </View>
         </Pressable>
       </Pressable>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
   absolute: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
   container: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },

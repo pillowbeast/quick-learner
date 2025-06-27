@@ -36,15 +36,11 @@ const SafeAreaWrapper: React.FC<SafeAreaWrapperProps> = ({
     <View style={[
       styles.container,
       { backgroundColor },
-      style
+      style,
+      contentStyle,
+      padding,
     ]}>
-      <View style={[
-        styles.content,
-        padding,
-        contentStyle
-      ]}>
-        {children}
-      </View>
+      {children}
     </View>
   );
 };
@@ -53,9 +49,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     elevation: 3,
-  },
-  content: {
-    flex: 1,
   },
 });
 
