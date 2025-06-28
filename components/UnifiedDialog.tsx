@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useAppTheme } from '@/styles/ThemeContext';
+import { radii, spacing, typography } from '@/styles/tokens';
 
 interface UnifiedDialogProps {
   visible: boolean;
@@ -12,34 +13,35 @@ interface UnifiedDialogProps {
 }
 
 export default function UnifiedDialog({ visible, onDismiss, title, children, actions }: UnifiedDialogProps) {
-  const { colors } = useAppTheme();
+  const { theme, colors } = useAppTheme();
 
   if (!visible) {
     return null;
   }
   
   return (
-    <View style={styles.overlay}>
-      <Pressable onPress={onDismiss} style={styles.container}>
-        <BlurView style={styles.absolute} intensity={30} tint="dark" />
-        <Pressable onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.dialog, { backgroundColor: colors.secondary }]}>
-            <Text style={[styles.title, { color: colors.accent }]}>{title}</Text>
-            <View style={styles.content}>
-              {children}
+    <View style={styles.overlayFullScreen}>
+      <Pressable onPress={onDismiss} style={styles.stretchScreen}>
+        <BlurView style={[styles.stretchScreen, { paddingTop: 4.5*spacing.xxl }]} intensity={100} tint={theme === 'dark' ? 'dark' : 'light'}>
+          <Pressable onPress={(e) => e.stopPropagation()} style={styles.dialogContainer}>
+            <View style={[styles.dialog, { backgroundColor: colors.muted }]}>
+              <Text style={[styles.title, { color: colors.accent, fontSize: typography.header.fontSize, fontWeight: typography.header.fontWeight }]}>{title}</Text>
+              <View style={styles.content}>
+                {children}
+              </View>
+              <View style={styles.actions}>
+                {actions}
+              </View>
             </View>
-            <View style={styles.actions}>
-              {actions}
-            </View>
-          </View>
-        </Pressable>
+          </Pressable>
+        </BlurView>
       </Pressable>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  overlayFullScreen: {
     position: 'absolute',
     left: 0,
     right: 0,
@@ -47,45 +49,35 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 1000,
   },
-  absolute: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-  container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
+  stretchScreen: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
-  dialog: {
-    borderRadius: 20,
-    padding: 20,
-    width: '90%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+  dialogContainer: {
+    width: '100%',
+    maxHeight: '80%',
+    padding: spacing.sm,
   },
-  title: {
-    marginBottom: 15,
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: 'bold',
+  dialog: {
+    borderRadius: radii.sm,
+    padding: spacing.sm,
   },
   content: {
-    marginBottom: 20,
+    marginTop: spacing.sm,
+    marginLeft: spacing.sm,
+    marginBottom: spacing.md,
+    marginRight: spacing.sm,
+    gap: spacing.md,
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 10,
+    gap: spacing.sm,
+  },
+  title: {
+    marginLeft: spacing.sm,
+    marginBottom: spacing.sm,
   },
 });

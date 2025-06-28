@@ -10,7 +10,7 @@ interface ButtonProps {
   disabled?: boolean;
 }
 
-export function Button({ onPress, children, style, textStyle, disabled }: ButtonProps) {
+export default function UnifiedButton({ onPress, children, style, textStyle, disabled }: ButtonProps) {
   return (
     <TouchableOpacity
       onPress={onPress}

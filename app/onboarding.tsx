@@ -10,7 +10,7 @@ import i18n from '@/i18n';
 import { useAppTheme } from '@/styles/ThemeContext';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 import { spacing, typography } from '@/styles/tokens';
-import { Button } from '@/components/UnifiedButton';
+import UnifiedButton from '@/components/UnifiedButton';
 
 const { width } = Dimensions.get('window');
 const ONBOARDING_KEY = '@quick_learner_onboarding_complete';
@@ -103,13 +103,13 @@ export default function Onboarding() {
                         />
                     ))}
                 </View>
-                <Button
+                <UnifiedButton
                     onPress={handleComplete}
                     style={{backgroundColor: colors.primary, width: '80%'}}
                     textStyle={{color: colors.onPrimaryOrSecondary}}
                 >
                     {i18n.t('got_it')}
-                </Button>
+                </UnifiedButton>
             </View>
         </SafeAreaWrapper>
     );

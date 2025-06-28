@@ -97,6 +97,7 @@ export default {
     add_words_info_desc: "Use the + button to add new words to your list. You can add words one by one or import them in bulk.",
     memorize_info: "Memorize",
     memorize_info_desc: "The lightbulb button starts a memorization session where you can practice your words and improve your proficiency.",
+    enter_list_description: "Enter list description (optional)",
 
     // Errors
     list_not_found: "List not found",

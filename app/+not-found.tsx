@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Button } from 'react-native';
 import { Link, Stack } from 'expo-router';
 
 import { useNavigationHelper } from '@/hooks/useNavigation';
-import { Button } from '@/components/UnifiedButton';
 import { useAppTheme } from '@/styles/ThemeContext';
+import UnifiedButton from '@/components/UnifiedButton';
 import i18n from '@/i18n';
 
 export default function NotFoundScreen() {
@@ -15,9 +15,9 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: 'Oops! Not Found' }} />
       <View style={styles.container}>
-        <Button onPress={goHomeReplace} style={{backgroundColor: colors.accent}} textStyle={{color: colors.text}}>
+        <UnifiedButton onPress={goHomeReplace} style={{backgroundColor: colors.accent}} textStyle={{color: colors.text}}>
           {i18n.t('go_to_home')}
-        </Button>
+        </UnifiedButton>
       </View>
     </>
   );

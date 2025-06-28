@@ -22,7 +22,8 @@ export const entryStyles = StyleSheet.create({
     paddingBottom: spacing.md,
     paddingLeft: spacing.md,
     paddingRight: spacing.md,
-    backgroundColor: 'red',
+    height: 90,
+    borderRadius: radii.sm,
   },
   cardRowContent: {
     width: '100%',
@@ -31,7 +32,6 @@ export const entryStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingLeft: spacing.md,
     paddingRight: spacing.md,
-    backgroundColor: 'blue',
   },
   cardColumnContent: {
     flexDirection: 'column',
@@ -60,9 +60,8 @@ export const entryStyles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
   },
-  // Specific to Word entries
   wordCardTextContainer: {
-    flex: 1, // Allow text to take up space before proficiency/actions
+    flex: 1,
     flexDirection: 'column',
   },
   wordTranslation: {

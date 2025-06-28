@@ -27,7 +27,7 @@ export default function Flag({ iso }: { iso: string }) {
             >
                 <CountryFlag 
                     isoCode={countryCode}
-                    size={spacing.xxl}
+                    size={spacing.xl}
                     style={{ backgroundColor: 'transparent' }} />
             </Surface>
         </View>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-import { Button } from '@/components/UnifiedButton';
+import UnifiedButton from '@/components/UnifiedButton';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 import UnifiedHeader from '@/components/UnifiedHeader';
@@ -131,7 +131,7 @@ export default function SettingsScreen() {
           />
           
           <View style={styles.buttonContainer}>
-            <Button
+            <UnifiedButton
               onPress={handleSaveApiKey}
               style={{
                 flex: 1,
@@ -141,8 +141,8 @@ export default function SettingsScreen() {
               disabled={!apiKey}
             >
               {i18n.t('save_api_key')}
-            </Button>
-            <Button
+            </UnifiedButton>
+            <UnifiedButton
               onPress={handleClearApiKey}
               style={{
                 flex: 1,
@@ -151,7 +151,7 @@ export default function SettingsScreen() {
               textStyle={{ color: colors.onPrimaryOrSecondary }}
             >
               {i18n.t('clear_api_key')}
-            </Button>
+            </UnifiedButton>
           </View>
         </View>
       </ScrollView>

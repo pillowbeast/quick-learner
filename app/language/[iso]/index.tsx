@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, View, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
-import { Text, Surface, Button, ActivityIndicator, IconButton, TextInput } from 'react-native-paper';
+import { Text, Surface, ActivityIndicator, IconButton, TextInput } from 'react-native-paper';
 import React from 'react';
 import { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable'; 
 
@@ -18,6 +18,7 @@ import { spacing, typography } from '@/styles/tokens';
 import { useAppTheme } from '@/styles/ThemeContext';
 import UnifiedSeperator from '@/components/UnifiedSeperator';
 import UnifiedAddButton from '@/components/UnifiedAddButton';
+import UnifiedButton from '@/components/UnifiedButton';
 import UnifiedDialog from '@/components/UnifiedDialog';
 
 export default function LanguagePage() {
@@ -26,8 +27,12 @@ export default function LanguagePage() {
   const database = useDatabase();
   const { colors } = useAppTheme();
   const [newListName, setNewListName] = useState("");
+  const [newListDescription, setNewListDescription] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogVisible, setDialogVisible] = useState(false);
+  const [isDeleteConfirmationVisible, setDeleteConfirmationVisible] = useState(false);
+  const [listToDelete, setListToDelete] = useState<any>(null);
+  const [error, setError] = useState<{ title: string, message: string } | null>(null);
 
   useEffect(() => {
     const loadLists = async () => {
@@ -50,11 +55,11 @@ export default function LanguagePage() {
     }
   }, [state.currentLanguage?.uuid, database.isLoading, database.isInitialized]);
 
-  const addListLogic = async (name: string) => {
+  const addListLogic = async (name: string, description: string) => {
     if (name && name.trim() && state.currentLanguage) {
       try {
         setIsLoading(true);
-        const result = await database.addList(state.currentLanguage.iso, name.trim());
+        const result = await database.addList(state.currentLanguage.iso, name.trim(), description.trim());
         if (result && state.currentLanguage.lists) {
           setCurrentLanguage({
             ...state.currentLanguage,
@@ -64,26 +69,43 @@ export default function LanguagePage() {
         }
       } catch (error) {
         console.error('Error adding list:', error);
-        Alert.alert(i18n.t('Error'), i18n.t('failed_to_add_list'));
+        setError({ title: i18n.t('Error'), message: i18n.t('failed_to_add_list') });
       } finally {
         setIsLoading(false);
       }
     }
   };
 
-  const handleEditList = (list: typeof state.currentList) => {
-    console.log("Edit list:", list?.name);
-    Alert.alert("Edit List", `Rename: ${list?.name}? (Not implemented yet)`);
-  };
-
   const handleAddList = async () => {
     setNewListName(''); // Reset input
+    setNewListDescription(''); // Reset input
     setDialogVisible(true);
   };
 
   const handleDialogSubmit = () => {
-    addListLogic(newListName);
+    addListLogic(newListName, newListDescription);
     setDialogVisible(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!listToDelete) return;
+    try {
+      setIsLoading(true);
+      await database.deleteList(listToDelete.uuid);
+      if (state.currentLanguage?.lists) {
+        setCurrentLanguage({
+          ...state.currentLanguage,
+          lists: state.currentLanguage.lists.filter(l => l.uuid !== listToDelete.uuid)
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting list:', error);
+      setError({ title: i18n.t('delete_error_title'), message: i18n.t('delete_error_message') });
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirmationVisible(false);
+      setListToDelete(null);
+    }
   };
 
   const handleListSelect = (list: typeof state.currentList) => {
@@ -97,43 +119,10 @@ export default function LanguagePage() {
     }
   };
 
-  const handleDeleteList = async (list: typeof state.currentList) => {
+  const handleDeleteList = (list: typeof state.currentList) => {
     if (!list) return;
-    
-    Alert.alert(
-      i18n.t('delete_list_confirm_title'),
-      i18n.t('delete_list_confirm_message'),
-      [
-        {
-          text: i18n.t('cancel'),
-          style: 'cancel'
-        },
-        {
-          text: i18n.t('delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              await database.deleteList(list.uuid);
-              if (state.currentLanguage?.lists) {
-                setCurrentLanguage({
-                  ...state.currentLanguage,
-                  lists: state.currentLanguage.lists.filter(l => l.uuid !== list.uuid)
-                });
-              }
-            } catch (error) {
-              console.error('Error deleting list:', error);
-              Alert.alert(
-                i18n.t('delete_error_title'),
-                i18n.t('delete_error_message')
-              );
-            } finally {
-              setIsLoading(false);
-            }
-          }
-        }
-      ]
-    );
+    setListToDelete(list);
+    setDeleteConfirmationVisible(true);
   };
 
   if (!state.currentLanguage) {
@@ -164,21 +153,52 @@ export default function LanguagePage() {
   return (
     <SafeAreaWrapper backgroundColor={colors.background}>
       <UnifiedDialog
-          visible={isDialogVisible}
-          onDismiss={() => setDialogVisible(false)}
-          title={i18n.t('add_list')}
-          actions={
-              <>
-              </>
-            }
-          >
-          <TextInput
-              label={i18n.t('enter_list_name')}
-              value={newListName}
-              onChangeText={setNewListName}
-              textColor={colors.accent}
-              autoFocus
-            />
+        visible={isDialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+        title={i18n.t('add_list')}
+        actions={
+            <>
+              <UnifiedButton textStyle={{color: colors.accent}} onPress={() => setDialogVisible(false)}>{i18n.t('cancel')}</UnifiedButton>
+              <UnifiedButton textStyle={{color: colors.accent}} onPress={handleDialogSubmit}>{i18n.t('add')}</UnifiedButton>
+            </>
+          }
+        >
+        <TextInput
+          label={i18n.t('enter_list_name')}
+          value={newListName}
+          onChangeText={setNewListName}
+          textColor={colors.accent}
+          autoFocus
+        />
+        <TextInput
+          label={i18n.t('enter_list_description')}
+          value={newListDescription}
+          onChangeText={setNewListDescription}
+          textColor={colors.accent}
+        />
+      </UnifiedDialog>
+      <UnifiedDialog
+        visible={isDeleteConfirmationVisible}
+        onDismiss={() => setDeleteConfirmationVisible(false)}
+        title={i18n.t('delete_list_confirm_title')}
+        actions={
+            <>
+              <UnifiedButton textStyle={{color: colors.accent}} onPress={() => setDeleteConfirmationVisible(false)}>{i18n.t('cancel')}</UnifiedButton>
+              <UnifiedButton textStyle={{color: colors.accent}} onPress={handleConfirmDelete}>{i18n.t('delete')}</UnifiedButton>
+            </>
+          }
+        >
+        <Text style={{color: colors.text}}>{i18n.t('delete_list_confirm_message')}</Text>
+      </UnifiedDialog>
+      <UnifiedDialog
+        visible={!!error}
+        onDismiss={() => setError(null)}
+        title={error?.title || ''}
+        actions={
+          <UnifiedButton textStyle={{color: colors.accent}} onPress={() => setError(null)}>{i18n.t('ok')}</UnifiedButton>
+        }
+      >
+        <Text style={{color: colors.text}}>{error?.message || ''}</Text>
       </UnifiedDialog>
       <UnifiedHeader 
         title={state.currentLanguage.name}
@@ -189,31 +209,33 @@ export default function LanguagePage() {
           const isLastItem = index === (state.currentLanguage?.lists?.length || 0) - 1;
 
           return (
-            <SwipeableListCard
-              key={list.uuid}
-              swipeableRef={listSwipeableRef}
-              onSwipeLeft={() => handleEditList(list)}
-              onSwipeRight={() => handleDeleteList(list)}
-            >
-              <Surface 
-                style={[entryStyles.card, {backgroundColor: colors.background}]}
-                elevation={0}
+            <View>
+              <SwipeableListCard
+                key={list.uuid}
+                swipeableRef={listSwipeableRef}
+                onSwipeLeft={() => handleDeleteList(list)}
+                onSwipeRight={() => handleDeleteList(list)}
               >
-                <TouchableOpacity
-                  onPress={() => handleListSelect(list)}
-                  onLongPress={() => Alert.alert(list.name, list.description || '')}
-                  style={{width: '100%', flex: 1}}
+                <Surface 
+                  style={[entryStyles.card, {backgroundColor: colors.background}]}
+                  elevation={0}
                 >
-                  <View style={entryStyles.cardRowContent}>
-                    <View style={entryStyles.cardColumnContent}>
-                      <Text style={[typography.subheader, { color: colors.text }]} numberOfLines={1}>{list.name}</Text>
-                      {list.description && <Text style={[typography.caption, { color: colors.text }]} numberOfLines={2}>{list.description}</Text>}
+                  <TouchableOpacity
+                    onPress={() => handleListSelect(list)}
+                    onLongPress={() => Alert.alert(list.name, list.description || '-')}
+                    style={{width: '100%', flex: 1}}
+                  >
+                    <View style={entryStyles.cardRowContent}>
+                      <View style={entryStyles.cardColumnContent}>
+                        <Text style={[typography.subheader, { color: colors.text }]} numberOfLines={1}>{list.name}</Text>
+                        <Text style={[typography.caption, { color: colors.text }]} numberOfLines={1}>{list.description || '-'}</Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              </Surface>
+                  </TouchableOpacity>
+                </Surface>
+              </SwipeableListCard>
               {!isLastItem && <UnifiedSeperator/>}
-            </SwipeableListCard>
+            </View>
           );
         })}
         <UnifiedAddButton onPress={handleAddList} onLongPress={handleAddList} />
