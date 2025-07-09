@@ -22,6 +22,9 @@ Quick Learner is a modern, intuitive language learning application built with Re
 
 ## Getting Started
 
+Maybe you want 'Node Version Manager'(nvm) get it from the official GitHub page. \
+Then run `nvm install` from project root to install used version. 
+
 1. Install dependencies
    ```bash
    npm install
@@ -29,7 +32,8 @@ Quick Learner is a modern, intuitive language learning application built with Re
 
 2. Start the development server
    ```bash
-    npx expo start
+   npx expo login -u <username> -p <password> # first login to Expo
+   npx expo start
    ```
 
 3. Choose your preferred development environment:
