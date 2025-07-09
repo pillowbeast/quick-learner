@@ -209,9 +209,8 @@ export default function LanguagePage() {
           const isLastItem = index === (state.currentLanguage?.lists?.length || 0) - 1;
 
           return (
-            <View>
+            <View key={list.uuid}>
               <SwipeableListCard
-                key={list.uuid}
                 swipeableRef={listSwipeableRef}
                 onSwipeLeft={() => handleDeleteList(list)}
                 onSwipeRight={() => handleDeleteList(list)}
