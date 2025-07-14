@@ -1,55 +1,72 @@
+// react
 import React, { useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
-import { View, StyleSheet, FlatList, Share, Platform, Alert, TouchableOpacity, ScrollView } from 'react-native';
-import { Text, Card, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, TextInput, Searchbar, Menu } from 'react-native-paper';
-import { useFocusEffect, router } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import * as DocumentPicker from 'expo-document-picker';
+import { View, StyleSheet, FlatList, Platform, Alert, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, Searchbar } from 'react-native-paper';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// expo
+import { useFocusEffect } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
+
+// hooks
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useDatabase } from '@/hooks/useDatabase.tsx';
 import { Word } from '@/hooks/database/types';
 import { exportList, importList } from '@/hooks/database/list';
+
+// components
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 import { ListInfoOverlay } from '@/components/ListInfoOverlay';
 import UnifiedHeader from "@/components/UnifiedHeader";
 import UnifiedFooter from "@/components/UnifiedFooter";
-import { entryStyles } from "@/styles/entryStyles";
 import ProficiencyBar from "@/components/ProficiencyBar";
 import SwipeableWordCard from "@/components/SwipeableWordCard";
+import SwipeableListCard from "@/components/SwipeableListCard";
+
+// styles
 import i18n from '@/i18n';
 import { useAppTheme } from '@/styles/ThemeContext';
+import { entryStyles } from "@/styles/entryStyles";
+import { spacing, typography } from '@/styles/tokens';
+import UnifiedDialog from '@/components/UnifiedDialog';
+import UnifiedButton from '@/components/UnifiedButton';
 
 type SortOption = 'proficiency' | 'created_at' | 'abc' | 'word_type';
 type SortDirection = 'asc' | 'desc';
 
+// List Page with Words displayed
 export default function ListPage() {
+  // use hooks
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { state } = useNavigationContext();
   const { goToAddWordType, goToPracticeSettings, goToEditWord, goBack, goToSentences } = useNavigationHelper();
   const database = useDatabase();
+
+  // define UI/generic states
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>('proficiency');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [selectMode, setSelectMode] = useState(false);
+
+  // define info states
+  const [words, setWords] = useState<Word[]>([]);
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
+  const [selectedWords, setSelectedWords] = useState<Word[]>([]);
   const [wordDetails, setWordDetails] = useState<ReactNode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState<SortOption>('proficiency');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [showSortMenu, setShowSortMenu] = useState(false);
-
-  const [words, setWords] = useState<Word[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [selectedWords, setSelectedWords] = useState<Word[]>([]);
-  const [selectMode, setSelectMode] = useState(false);
 
   const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
 
+  // sort words
   const sortWords = (wordsToSort: Word[]) => {
     return [...wordsToSort].sort((a, b) => {
       let comparison = 0;
@@ -82,6 +99,7 @@ export default function ListPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // filter words -> what is this?
   const filteredWords = useMemo(() => {
     if (!debouncedSearchQuery) return words;
     
@@ -92,6 +110,7 @@ export default function ListPage() {
     );
   }, [words, debouncedSearchQuery]);
 
+  // load words
   const loadWords = useCallback(async () => {
     try {
       if (!state.currentList?.uuid) {
@@ -119,6 +138,7 @@ export default function ListPage() {
     }, [loadWords])
   );
 
+  // export list
   const handleExport = async () => {
     try {
       if (!state.currentList?.uuid) {
@@ -179,6 +199,7 @@ export default function ListPage() {
     }
   };
 
+  // import list
   const handleImport = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -228,6 +249,7 @@ export default function ListPage() {
     }
   };
 
+  // delete word
   const handleDeleteWord = async (word: Word) => {
     closeSwipeable(word.uuid);
     Alert.alert(
@@ -252,22 +274,10 @@ export default function ListPage() {
     );
   };
 
+  // edit word
   const handleEditWord = (word: Word) => {
     closeSwipeable(word.uuid);
     goToEditWord(word.uuid);
-  };
-
-  const openSortMenu = () => setShowSortMenu(true);
-  const closeSortMenu = () => setShowSortMenu(false);
-
-  const applySort = (option: SortOption) => {
-    if (option === sortOption) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortOption(option);
-      setSortDirection('desc');
-    }
-    closeSortMenu();
   };
   
   const closeSwipeable = (key: string) => {
@@ -276,6 +286,7 @@ export default function ListPage() {
     }
   };
 
+  // provides the View on Press on a word
   const renderWordDetails = async (word: Word) => {
     setWordDetails(
       <View style={styles.wordDetails}>
@@ -303,6 +314,7 @@ export default function ListPage() {
     setShowInfo(true);
   };
 
+  // Wrong -> goToSentences should be called with the word uuids
   const handlePracticeSentences = () => {
     if (state.currentLanguage && state.currentList) {
         goToSentences(state.currentLanguage, state.currentList);
@@ -311,25 +323,7 @@ export default function ListPage() {
     }
   };
 
-  const headerActions = (
-    <View>
-      <IconButton icon="sort" onPress={openSortMenu} />
-      <Menu
-        visible={showSortMenu}
-        onDismiss={closeSortMenu}
-        anchor={<View style={{width:0, height:0}} />}
-      >
-        <Menu.Item onPress={() => applySort('proficiency')} title={i18n.t('sort_proficiency')} />
-        <Menu.Item onPress={() => applySort('created_at')} title={i18n.t('sort_date_added')} />
-        <Menu.Item onPress={() => applySort('abc')} title={i18n.t('sort_alphabetical')} />
-        <Menu.Item onPress={() => applySort('word_type')} title={i18n.t('sort_word_type')} />
-        <Menu.Item onPress={handlePracticeSentences} title={i18n.t('practice_sentences')} />
-        <Menu.Item onPress={handleExport} title={i18n.t('export_list')} />
-        <Menu.Item onPress={handleImport} title={i18n.t('import_list')} />
-      </Menu>
-    </View>
-  );
-  
+  // Toggle word selection based on long press
   const toggleWordSelection = (word: Word) => {
     setSelectedWords(prev => 
       prev.find(w => w.uuid === word.uuid) 
@@ -338,6 +332,7 @@ export default function ListPage() {
     );
   };
 
+  // Render one item -> SwipeableWordCard add directly instead of FlatList
   const renderItem = ({ item }: { item: Word }) => {
     const wordSwipeableRef = React.createRef<Swipeable>();
     swipeableRefs.current[item.uuid] = wordSwipeableRef.current;
@@ -374,12 +369,14 @@ export default function ListPage() {
     );
   };
 
+  // Empty component -> what to do?
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
       <Text style={{color: colors.muted}}>{i18n.t('no_words_in_list')}</Text>
     </View>
   );
 
+  // Add word button -> change to UnifiedAddButton
   const renderAddWordButton = () => (
     <TouchableOpacity onPress={() => goToAddWordType()} disabled={isLoading}>
         <Surface 
@@ -397,6 +394,7 @@ export default function ListPage() {
     </TouchableOpacity>
   );
   
+  // List is not found
   if (!state.currentList) {
     return (
       <SafeAreaWrapper backgroundColor={colors.background}>
@@ -410,6 +408,7 @@ export default function ListPage() {
     );
   }
 
+  // List is loading and there are no words
   if (isLoading && (!words || words.length === 0)) { 
     return (
       <SafeAreaWrapper backgroundColor={colors.background}>
@@ -425,8 +424,9 @@ export default function ListPage() {
     );
   }
 
+  // Main return
   return (
-    <SafeAreaWrapper backgroundColor={colors.background} excludeEdges={['bottom']}>
+    <SafeAreaWrapper backgroundColor={colors.background}>
       <UnifiedHeader
         title={state.currentList?.name || ''}
         actions={
@@ -509,7 +509,17 @@ export default function ListPage() {
         visible={showInfo}
         onDismiss={() => setShowInfo(false)}
       />
-      <Portal>
+      <UnifiedDialog
+        visible={Boolean(selectedWord)}
+        onDismiss={() => setSelectedWord(null)}
+        title={selectedWord?.translation || ' '}
+        actions={
+          <UnifiedButton onPress={() => setSelectedWord(null)}>{i18n.t('close')}</UnifiedButton>
+        }
+      >
+        {wordDetails}
+      </UnifiedDialog>
+      {/* <Portal>
         <Dialog 
           visible={!!selectedWord} 
           onDismiss={() => setSelectedWord(null)}
@@ -528,7 +538,7 @@ export default function ListPage() {
             </View>
           )}
         </Dialog>
-      </Portal>
+      </Portal> */}
       <Portal>
         <Dialog 
           visible={showSortMenu} 

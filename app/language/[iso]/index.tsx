@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, View, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
-import { Text, Surface, ActivityIndicator, IconButton, TextInput } from 'react-native-paper';
+import { ScrollView, View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { Text, Surface, ActivityIndicator, TextInput } from 'react-native-paper';
 import React from 'react';
 import { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable'; 
 
@@ -8,18 +8,19 @@ import { useDatabase } from '@/hooks/useDatabase';
 import { useNavigationHelper } from '@/hooks/useNavigation';
 import { useNavigationContext } from '@/hooks/useNavigationContext';
 
-import i18n from '@/i18n';
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 import UnifiedHeader from "@/components/UnifiedHeader";
 import UnifiedFooter from "@/components/UnifiedFooter";
-import { entryStyles } from "@/styles/entryStyles";
 import SwipeableListCard from "@/components/SwipeableListCard";
-import { spacing, typography } from '@/styles/tokens';
-import { useAppTheme } from '@/styles/ThemeContext';
 import UnifiedSeperator from '@/components/UnifiedSeperator';
 import UnifiedAddButton from '@/components/UnifiedAddButton';
 import UnifiedButton from '@/components/UnifiedButton';
 import UnifiedDialog from '@/components/UnifiedDialog';
+
+import i18n from '@/i18n';
+import { entryStyles } from "@/styles/entryStyles";
+import { spacing, typography } from '@/styles/tokens';
+import { useAppTheme } from '@/styles/ThemeContext';
 
 export default function LanguagePage() {
   const { state, setCurrentList, setCurrentLanguage } = useNavigationContext();
