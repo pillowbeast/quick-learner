@@ -216,9 +216,8 @@ export default function LanguagePage() {
                 onSwipeLeft={() => handleDeleteList(list)}
                 onSwipeRight={() => handleDeleteList(list)}
               >
-                <Surface 
+                <View 
                   style={[entryStyles.card, {backgroundColor: colors.background}]}
-                  elevation={0}
                 >
                   <TouchableOpacity
                     onPress={() => handleListSelect(list)}
@@ -232,7 +231,7 @@ export default function LanguagePage() {
                       </View>
                     </View>
                   </TouchableOpacity>
-                </Surface>
+                </View>
               </SwipeableListCard>
               {!isLastItem && <UnifiedSeperator/>}
             </View>

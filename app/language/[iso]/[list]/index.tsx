@@ -34,6 +34,8 @@ import { entryStyles } from "@/styles/entryStyles";
 import { spacing, typography } from '@/styles/tokens';
 import UnifiedDialog from '@/components/UnifiedDialog';
 import UnifiedButton from '@/components/UnifiedButton';
+import UnifiedAddButton from '@/components/UnifiedAddButton';
+import UnifiedSeperator from '@/components/UnifiedSeperator';
 
 type SortOption = 'proficiency' | 'created_at' | 'abc' | 'word_type';
 type SortDirection = 'asc' | 'desc';
@@ -517,15 +519,45 @@ export default function ListPage() {
         placeholderTextColor={colors.muted}
         elevation={1}
       />
-      <FlatList
-        data={filteredWords}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.uuid}
-        style={styles.flatListContainer}
-        contentContainerStyle={styles.flatListContentContainer}
-        ListEmptyComponent={renderEmptyComponent}
-        ListFooterComponent={renderAddWordButton}
-      />
+      <ScrollView style={{flex: 1}} contentContainerStyle={styles.scrollContentContainer} contentOffset={{x: 0, y: 90}}>
+        <UnifiedAddButton onPress={() => goToAddWordType()} onLongPress={() => goToAddWordType()} />
+        {filteredWords.map((word, index) => {
+          const wordSwipeableRef = React.createRef<Swipeable>();
+          swipeableRefs.current[word.uuid] = wordSwipeableRef.current;
+          const isLastItem = index === (filteredWords.length - 1);
+
+          return (
+            <View key={word.uuid}>
+              <SwipeableWordCard
+                swipeableRef={wordSwipeableRef}
+                onSwipeLeft={() => handleEditWord(word)}
+                onSwipeRight={() => handleDeleteWord(word)}
+            >
+                <TouchableOpacity onPress={() => setSelectedWord(word)} onLongPress={() => toggleWordSelection(word)}>
+                    <View 
+                      style={[
+                          entryStyles.card, 
+                          styles.card, 
+                          { backgroundColor: colors.background },
+                          selectedWords.find(w => w.uuid === word.uuid) ? styles.selectedCard : {}
+                      ]}
+                    >
+                        <View style={entryStyles.cardRowContent}>
+                            <View style={entryStyles.wordCardTextContainer}>
+                                <Text style={[entryStyles.wordTranslation, { color: colors.text }]}>{word.translation}</Text>
+                                <Text style={[entryStyles.wordOriginal, { color: colors.muted }]}>{word.word}</Text>
+                                {word.example && <Text style={[styles.example, {color: colors.muted}]}>{word.example}</Text>}
+                                <ProficiencyBar proficiency={word.proficiency} isKnown={word.isKnown} />
+                            </View>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+              </SwipeableWordCard>
+              {!isLastItem && <UnifiedSeperator/>}
+            </View>
+          );
+        })}
+      </ScrollView>
       <FAB
         icon="lightbulb"
         style={[styles.fab, styles.memorizeFab, { bottom: insets.bottom + 80 }]}
@@ -615,5 +647,8 @@ const styles = StyleSheet.create({
   },
   dialogWord: {
     fontWeight: 'bold',
+  },
+  scrollContentContainer: {
+    paddingVertical: 8,
   },
 });
