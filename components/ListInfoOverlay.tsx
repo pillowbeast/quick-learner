@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { Text, Button, Portal, Modal, Surface } from 'react-native-paper';
+import { View, StyleSheet, Dimensions, Animated } from 'react-native';
+import { Text, Button } from 'react-native-paper';
 import Carousel from 'react-native-reanimated-carousel';
+import UnifiedDialog from './UnifiedDialog';
+import { useAppTheme } from '@/styles/ThemeContext';
 import i18n from '@/i18n';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -42,75 +44,90 @@ interface ListInfoOverlayProps {
 
 export const ListInfoOverlay: React.FC<ListInfoOverlayProps> = ({ visible, onDismiss }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const { colors } = useAppTheme();
+
+  const renderAnimatedDot = (index: number) => {
+    const progress = scrollProgress - index;
+    const scale = Math.max(0.6, 1 - Math.abs(progress) * 0.4);
+    const opacity = Math.max(0.3, 1 - Math.abs(progress) * 0.7);
+    
+    return (
+      <Animated.View
+        key={index}
+        style={[
+          styles.paginationDot,
+          {
+            backgroundColor: colors.primary,
+            transform: [{ scale }],
+            opacity,
+          },
+        ]}
+      />
+    );
+  };
 
   const renderSlide = ({ item }: { item: InfoSlide }) => (
-    <Surface style={styles.slide}>
-      <Text variant="headlineSmall" style={styles.title}>{item.title}</Text>
-      <Text variant="bodyLarge" style={styles.description}>{item.description}</Text>
-    </Surface>
+    <View style={styles.slideContainer}>
+      <View style={[styles.slide, { backgroundColor: colors.elevated }]}>
+        <Text variant="headlineSmall" style={[styles.title, { color: colors.text }]}>{item.title}</Text>
+        <Text variant="bodyLarge" style={[styles.description, { color: colors.text }]}>{item.description}</Text>
+      </View>
+    </View>
   );
 
   return (
-    <Portal>
-      <Modal
-        visible={visible}
-        onDismiss={onDismiss}
-        contentContainerStyle={styles.modal}
-      >
-        <View style={styles.container}>
-          <Carousel
-            loop={false}
-            width={screenWidth - 80}
-            height={300}
-            data={slides}
-            onSnapToItem={setCurrentIndex}
-            renderItem={renderSlide}
-          />
-          <View style={styles.pagination}>
-            {slides.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.paginationDot,
-                  currentIndex === index && styles.paginationDotActive,
-                ]}
-              />
-            ))}
-          </View>
-          <View style={styles.controls}>
-            <Button
-              mode="contained"
-              onPress={onDismiss}
-              style={styles.button}
-            >
-              {i18n.t('got_it')}
-            </Button>
-          </View>
+    <UnifiedDialog
+      visible={visible}
+      onDismiss={onDismiss}
+      title={i18n.t('help')}
+      actions={
+        <Button
+          mode="contained"
+          onPress={onDismiss}
+          style={styles.button}
+        >
+          {i18n.t('got_it')}
+        </Button>
+      }
+    >
+      <View style={styles.container}>
+        <Carousel
+          loop={false}
+          width={screenWidth - 80}
+          height={300}
+          data={slides}
+          onSnapToItem={setCurrentIndex}
+          onProgressChange={(_, absoluteProgress) => {
+            setScrollProgress(absoluteProgress);
+          }}
+          renderItem={renderSlide}
+          style={{ width: screenWidth - 80 }}
+          pagingEnabled={true}
+          mode="parallax"
+          modeConfig={{
+            parallaxScrollingScale: 0.9,
+            parallaxScrollingOffset: 50,
+          }}
+        />
+        <View style={styles.pagination}>
+          {slides.map((_, index) => renderAnimatedDot(index))}
         </View>
-      </Modal>
-    </Portal>
+      </View>
+    </UnifiedDialog>
   );
 };
 
 const styles = StyleSheet.create({
-  modal: {
-    margin: 20,
-    padding: 0,
-    backgroundColor: 'transparent',
-  },
   container: {
-    backgroundColor: 'white',
-    borderRadius: 12,
     padding: 20,
-    overflow: 'hidden',
   },
   slide: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 10,
     borderRadius: 12,
-    elevation: 4,
   },
   title: {
     textAlign: 'center',
@@ -119,11 +136,6 @@ const styles = StyleSheet.create({
   description: {
     textAlign: 'center',
     lineHeight: 24,
-  },
-  controls: {
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
   },
   button: {
     minWidth: 120,
@@ -138,10 +150,12 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E0E0E0',
     marginHorizontal: 4,
   },
-  paginationDotActive: {
-    backgroundColor: '#6200EE',
+  slideContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
   },
 });

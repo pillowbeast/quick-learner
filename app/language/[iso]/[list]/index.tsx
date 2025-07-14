@@ -1,5 +1,5 @@
 // react
-import React, { useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, StyleSheet, FlatList, Platform, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import { Text, FAB, ActivityIndicator, Surface, IconButton, Button, Portal, Dialog, Searchbar } from 'react-native-paper';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -50,7 +50,7 @@ export default function ListPage() {
   // define UI/generic states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showInfo, setShowInfo] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>('proficiency');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -60,7 +60,6 @@ export default function ListPage() {
   const [words, setWords] = useState<Word[]>([]);
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
   const [selectedWords, setSelectedWords] = useState<Word[]>([]);
-  const [wordDetails, setWordDetails] = useState<ReactNode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
@@ -281,37 +280,7 @@ export default function ListPage() {
   };
   
   const closeSwipeable = (key: string) => {
-    if (swipeableRefs.current[key]) {
-      swipeableRefs.current[key]?.close();
-    }
-  };
-
-  // provides the View on Press on a word
-  const renderWordDetails = async (word: Word) => {
-    setWordDetails(
-      <View style={styles.wordDetails}>
-        <View style={styles.detailSection}>
-          <Text style={[styles.detailLabel, { color: colors.muted }]}>{i18n.t('word')}:</Text>
-          <Text style={{ color: colors.text }}>{word.word}</Text>
-        </View>
-        <View style={styles.detailSection}>
-          <Text style={[styles.detailLabel, { color: colors.muted }]}>{i18n.t('translation')}:</Text>
-          <Text style={{ color: colors.text }}>{word.translation}</Text>
-        </View>
-        <View style={styles.detailSection}>
-          <Text style={[styles.detailLabel, { color: colors.muted }]}>{i18n.t('type')}:</Text>
-          <Text style={{ color: colors.text }}>{word.type}</Text>
-        </View>
-        {word.example && (
-          <View style={styles.detailSection}>
-            <Text style={[styles.detailLabel, { color: colors.muted }]}>{i18n.t('example')}:</Text>
-            <Text style={{ color: colors.text }}>{word.example}</Text>
-          </View>
-        )}
-      </View>
-    );
-    setSelectedWord(word);
-    setShowInfo(true);
+    swipeableRefs.current[key]?.close();
   };
 
   // Wrong -> goToSentences should be called with the word uuids
@@ -325,7 +294,7 @@ export default function ListPage() {
 
   // Toggle word selection based on long press
   const toggleWordSelection = (word: Word) => {
-    setSelectedWords(prev => 
+    setSelectedWords(prev =>
       prev.find(w => w.uuid === word.uuid) 
         ? prev.filter(w => w.uuid !== word.uuid)
         : [...prev, word]
@@ -343,7 +312,7 @@ export default function ListPage() {
             onSwipeLeft={() => handleEditWord(item)}
             onSwipeRight={() => handleDeleteWord(item)}
         >
-            <TouchableOpacity onPress={() => renderWordDetails(item)} onLongPress={() => toggleWordSelection(item)}>
+            <TouchableOpacity onPress={() => setSelectedWord(item)} onLongPress={() => toggleWordSelection(item)}>
                 <Surface 
                     style={[
                         entryStyles.card, 
@@ -427,6 +396,62 @@ export default function ListPage() {
   // Main return
   return (
     <SafeAreaWrapper backgroundColor={colors.background}>
+      <UnifiedDialog
+        visible={Boolean(selectedWord)}
+        onDismiss={() => setSelectedWord(null)}
+        title={selectedWord?.translation || ' '}
+        actions={
+          <UnifiedButton onPress={() => setSelectedWord(null)}>{i18n.t('close')}</UnifiedButton>
+        }
+      >
+        <View style={styles.wordDetails}>
+          <View style={styles.detailSection}>
+            <Text style={[styles.detailLabel, { color: colors.text }]}>{i18n.t('word')}:</Text>
+            <Text style={{ color: colors.text }}>{selectedWord?.word}</Text>
+          </View>
+          <View style={styles.detailSection}>
+            <Text style={[styles.detailLabel, { color: colors.text }]}>{i18n.t('translation')}:</Text>
+            <Text style={{ color: colors.text }}>{selectedWord?.translation}</Text>
+          </View>
+          <View style={styles.detailSection}>
+            <Text style={[styles.detailLabel, { color: colors.text }]}>{i18n.t('type')}:</Text>
+            <Text style={{ color: colors.text }}>{selectedWord?.type}</Text>
+          </View>
+          {selectedWord?.example && (
+            <View style={styles.detailSection}>
+              <Text style={[styles.detailLabel, { color: colors.text }]}>{i18n.t('example')}:</Text>
+              <Text style={{ color: colors.text }}>{selectedWord.example}</Text>
+            </View>
+          )}
+        </View>
+      </UnifiedDialog>
+      <UnifiedDialog
+        visible={showSortMenu}
+        onDismiss={() => setShowSortMenu(false)}
+        title={i18n.t('sort_by')}
+        actions={
+          <UnifiedButton onPress={() => setShowSortMenu(false)}>{i18n.t('cancel')}</UnifiedButton>
+        }
+      >
+        <View style={styles.sortOptions}>
+          <UnifiedButton onPress={() => {
+            setSortOption('proficiency');
+            setShowSortMenu(false);
+          }}>{i18n.t('proficiency')}</UnifiedButton>
+          <UnifiedButton onPress={() => {
+            setSortOption('created_at');
+            setShowSortMenu(false);
+          }}>{i18n.t('date')}</UnifiedButton>
+          <UnifiedButton onPress={() => {
+            setSortOption('abc');
+            setShowSortMenu(false);
+          }}>{i18n.t('alphabetical')}</UnifiedButton>
+          <UnifiedButton onPress={() => {
+            setSortOption('word_type');
+            setShowSortMenu(false);
+          }}>{i18n.t('word_type')}</UnifiedButton>
+        </View>
+      </UnifiedDialog>
       <UnifiedHeader
         title={state.currentList?.name || ''}
         actions={
@@ -472,6 +497,12 @@ export default function ListPage() {
                 size={24}
                 onPress={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
               />
+              <IconButton
+                style={{marginLeft: -6}}
+                icon="help-circle"
+                size={24}
+                onPress={() => setShowTutorial(true)}
+              />
             </>
           )
         }
@@ -506,95 +537,9 @@ export default function ListPage() {
         onPress={() => setSelectMode(!selectMode)}
       />
       <ListInfoOverlay
-        visible={showInfo}
-        onDismiss={() => setShowInfo(false)}
+        visible={showTutorial}
+        onDismiss={() => setShowTutorial(false)}
       />
-      <UnifiedDialog
-        visible={Boolean(selectedWord)}
-        onDismiss={() => setSelectedWord(null)}
-        title={selectedWord?.translation || ' '}
-        actions={
-          <UnifiedButton onPress={() => setSelectedWord(null)}>{i18n.t('close')}</UnifiedButton>
-        }
-      >
-        {wordDetails}
-      </UnifiedDialog>
-      {/* <Portal>
-        <Dialog 
-          visible={!!selectedWord} 
-          onDismiss={() => setSelectedWord(null)}
-          style={styles.wordDialog}
-        >
-          {selectedWord && (
-            <View>
-              <Dialog.Title>{selectedWord.translation}</Dialog.Title>
-              <Dialog.Content>
-                <Text variant="titleMedium" style={styles.dialogWord}>{selectedWord.word}</Text>
-                {wordDetails}
-              </Dialog.Content>
-              <Dialog.Actions>
-                <Button onPress={() => setSelectedWord(null)}>{i18n.t('close')}</Button>
-              </Dialog.Actions>
-            </View>
-          )}
-        </Dialog>
-      </Portal> */}
-      <Portal>
-        <Dialog 
-          visible={showSortMenu} 
-          onDismiss={() => setShowSortMenu(false)}
-          style={styles.sortMenu}
-        >
-          <Dialog.Title>{i18n.t('sort_by')}</Dialog.Title>
-          <Dialog.Content>
-            <View style={styles.sortOptions}>
-              <Button
-                mode={sortOption === 'proficiency' ? 'contained' : 'text'}
-                onPress={() => {
-                  setSortOption('proficiency');
-                  setShowSortMenu(false);
-                }}
-                style={styles.sortButton}
-              >
-                {i18n.t('proficiency')}
-              </Button>
-              <Button
-                mode={sortOption === 'created_at' ? 'contained' : 'text'}
-                onPress={() => {
-                  setSortOption('created_at');
-                  setShowSortMenu(false);
-                }}
-                style={styles.sortButton}
-              >
-                {i18n.t('date')}
-              </Button>
-              <Button
-                mode={sortOption === 'abc' ? 'contained' : 'text'}
-                onPress={() => {
-                  setSortOption('abc');
-                  setShowSortMenu(false);
-                }}
-                style={styles.sortButton}
-              >
-                {i18n.t('alphabetical')}
-              </Button>
-              <Button
-                mode={sortOption === 'word_type' ? 'contained' : 'text'}
-                onPress={() => {
-                  setSortOption('word_type');
-                  setShowSortMenu(false);
-                }}
-                style={styles.sortButton}
-              >
-                {i18n.t('word_type')}
-              </Button>
-            </View>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setShowSortMenu(false)}>{i18n.t('cancel')}</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
       <UnifiedFooter />
     </SafeAreaWrapper>
   );
