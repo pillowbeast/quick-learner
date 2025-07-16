@@ -9,7 +9,6 @@ export const entryStyles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-
   container: {
     flexDirection: 'column',
     width: '100%',
@@ -22,7 +21,7 @@ export const entryStyles = StyleSheet.create({
     paddingBottom: spacing.md,
     paddingLeft: spacing.md,
     paddingRight: spacing.md,
-    height: 90,
+    height: "auto",
     borderRadius: radii.sm,
   },
   cardRowContent: {
@@ -37,6 +36,7 @@ export const entryStyles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
+    width: '100%',
   },
   infoContainer: {
     flexDirection: 'row',
@@ -49,30 +49,4 @@ export const entryStyles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
-  actionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionButton: {
-    marginLeft: 8,
-  },
-  addButtonText: {
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  wordCardTextContainer: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  wordTranslation: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  wordOriginal: {
-    fontSize: 15,
-    color: '#444',
-  },
-  wordProficiencyContainer: {
-    marginTop: 6,
-  }
 }); 

@@ -1,13 +1,10 @@
 export const lightColors = {
     // brand colors
-    // primary is the brand highlight color
     primary: '#643bd1',
-    // secondary is the secondary color, which shouldnt steal the show of the primary
     secondary: '#665f96',
-    // onPrimaryOrSecondary is the color of the text on the primary or secondary color
+    tertiary: '#9a96b3',
     onPrimaryOrSecondary: '#FFFFFF',
 
-    // accent is the accent color, which should be used to highlight important information
     accent: '#fab30c',
     onAccent: '#1A1A1A',
 
@@ -27,6 +24,7 @@ export const lightColors = {
 export const darkColors = {
     primary: '#9a6efa',
     secondary: '#9a96b3',
+    tertiary: '#665f96',
     onPrimaryOrSecondary: '#0D0D0D',
     accent: '#FFC94D',
     onAccent: '#1A1A1A',
@@ -55,6 +53,9 @@ export const typography = {
     header: { fontSize: 32 as const, fontWeight: '700' as const },
     subheader: { fontSize: 24, fontWeight: '700' as const },
     body: { fontSize: 20, fontWeight: '400' as const },
+    bold: { fontSize: 18, fontWeight: 'bold' as const },
+    small_body: { fontSize: 15, fontWeight: '600' as const },
+    italic: { fontSize: 14, fontWeight: '400' as const, fontStyle: 'italic' as const },
     caption: { fontSize: 16, fontWeight: '200' as const },
 };
 
