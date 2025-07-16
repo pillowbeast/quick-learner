@@ -26,7 +26,7 @@ function mapRowToWord(row: DbWord): Word {
         list_id: row.list_id,
         word: row.word,
         translation: row.translation,
-        type: row.type,
+        type: row.type as WordType,
         example: row.example,
         proficiency: row.proficiency,
         last_seen: row.last_seen,
@@ -35,6 +35,29 @@ function mapRowToWord(row: DbWord): Word {
         created_at: row.created_at,
         updated_at: row.updated_at
     };
+}
+
+// Words
+export async function getWord(uuid: UUID): Promise<Word | null> {
+    logger.debug(`Getting word: ${uuid}`);
+    const db = await getDatabase();
+    try {
+        const result = await db.getFirstAsync(
+            "SELECT * FROM words WHERE uuid = ?",
+            [uuid]
+        ) as DbWord | null;
+        
+        if (result) {
+            logger.debug(`Found word: ${result.word}`);
+            return mapRowToWord(result);
+        } else {
+            logger.debug(`Word not found: ${uuid}`);
+            return null;
+        }
+    } catch (error) {
+        logger.error(`Error getting word ${uuid}:`, error);
+        throw error;
+    }
 }
 
 export async function addWord(
@@ -69,28 +92,6 @@ export async function addWord(
     );
 
     return wordObj;
-}
-
-export async function getWord(uuid: UUID): Promise<Word | null> {
-    logger.debug(`Getting word: ${uuid}`);
-    const db = await getDatabase();
-    try {
-        const result = await db.getFirstAsync(
-            "SELECT * FROM words WHERE uuid = ?",
-            [uuid]
-        ) as DbWord | null;
-        
-        if (result) {
-            logger.debug(`Found word: ${result.word}`);
-            return mapRowToWord(result);
-        } else {
-            logger.debug(`Word not found: ${uuid}`);
-            return null;
-        }
-    } catch (error) {
-        logger.error(`Error getting word ${uuid}:`, error);
-        throw error;
-    }
 }
 
 export async function getWordsByList(list_id: UUID): Promise<Word[]> {
@@ -135,6 +136,15 @@ export async function updateWordProficiency(
     );
 }
 
+// Word properties
+export async function getWordProperties(word_id: UUID): Promise<WordProperty[]> {
+    const db = await getDatabase();
+    const results = await db.getAllAsync(
+        "SELECT * FROM word_properties WHERE word_id = ?",
+        [word_id]
+    ) as WordProperty[];
+    return results;
+}
 export async function addWordProperty(
     word_id: UUID,
     name: string,
@@ -144,18 +154,24 @@ export async function addWordProperty(
     const db = await getDatabase();
     const now = new Date().toISOString();
     await db.runAsync(
-        "INSERT INTO word_properties (word_id, name, value, type, created_at) VALUES (?, ?, ?, ?, ?)",
-        [word_id, name, value, type, now]
+        "INSERT INTO word_properties (word_id, name, value, type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [word_id, name, value, type, now, now]
     );
 }
 
-export async function getWordProperties(word_id: UUID): Promise<WordProperty[]> {
+export async function updateWordProperty(word_id: UUID, name: string, value: string): Promise<void> {
+    logger.debug(`Updating word property: ${word_id} ${name} ${value}`);
     const db = await getDatabase();
-    const results = await db.getAllAsync(
-        "SELECT * FROM word_properties WHERE word_id = ?",
-        [word_id]
-    ) as WordProperty[];
-    return results;
+    const now = new Date().toISOString();
+    try {
+        await db.runAsync(
+        "UPDATE word_properties SET value = ?, updated_at = ? WHERE word_id = ? AND name = ?",
+        [value, now, word_id, name]
+    );
+    } catch (error) {
+        logger.error(`Error updating word property ${word_id} ${name}:`, error);
+        throw error;
+    }
 }
 
 export async function deleteWordProperty(word_id: UUID, name: string): Promise<void> {

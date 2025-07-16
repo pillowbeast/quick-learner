@@ -1,78 +1,96 @@
-import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
-import { Text, Button, ActivityIndicator, IconButton } from 'react-native-paper';
-import { useLocalSearchParams, useFocusEffect } from 'expo-router';
+import React, { useState, useCallback } from "react";
+import { View, StyleSheet, Animated } from "react-native";
+import {
+  Text,
+  Button,
+  ActivityIndicator,
+  IconButton,
+} from "react-native-paper";
+import { useLocalSearchParams, useFocusEffect } from "expo-router";
 
-import { useNavigationContext } from '@/hooks/useNavigationContext';
-import { useNavigationHelper } from '@/hooks/useNavigation';
+import { useNavigationContext } from "@/hooks/useNavigationContext";
+import { useNavigationHelper } from "@/hooks/useNavigation";
 import { Word, UUID } from "@/hooks/database/types";
-import { useDatabase } from '@/hooks/useDatabase.tsx';
-import { languageConfigs } from '@/types/languages';
-import { WordProperties, PropertyType } from '@/types/word';
-import WordForm from '@/components/WordForm';
+import { useDatabase } from "@/hooks/useDatabase.tsx";
+
+import WordForm from "@/components/WordForm";
+import UnifiedHeader from "@/components/UnifiedHeader";
+import SafeAreaWrapper from "@/components/SafeAreaWrapper";
+import UnifiedFooter from "@/components/UnifiedFooter";
+
+import { languageConfigs } from "@/types/languages";
+import { WordType, WordProperties, PropertyType } from "@/types/word";
+
+import { useAppTheme } from "@/styles/ThemeContext";
+import i18n from "@/i18n";
 
 export default function EditWordPage() {
   const { state } = useNavigationContext();
   const { uuid } = useLocalSearchParams<{ uuid: UUID }>();
-  const { goBack } = useNavigationHelper();
-  const config = languageConfigs[state.currentLanguage?.iso || 'en'] || languageConfigs.en;
   const database = useDatabase();
-  
+  const { goBack } = useNavigationHelper();
+  const { colors } = useAppTheme();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [checkmarkScale] = useState(new Animated.Value(0));
   const [wordData, setWordData] = useState<Word | null>(null);
-  const [initialProperties, setInitialProperties] = useState<WordProperties>({});
+  const [initialProperties, setInitialProperties] = useState<WordProperties>(
+    {}
+  );
+
+  const config =
+    languageConfigs[state.currentLanguage?.iso || "en"] || languageConfigs.en;
 
   const loadWord = useCallback(async () => {
     try {
       if (!uuid) {
-        setError('No word ID provided');
+        setError("No word ID provided");
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
       const data = await database.getWord(uuid);
-      
+
       if (!data) {
-        setError('Word not found');
+        setError("Word not found");
         setIsLoading(false);
         return;
       }
 
       setWordData(data);
-      
+
       // Load properties
       const wordProperties = await database.getWordProperties(data.uuid);
-      console.log('Initial word properties:', wordProperties);
+      console.log("Initial word properties:", wordProperties);
       const formattedProperties: WordProperties = {};
-      
+
       for (const prop of wordProperties) {
-        if (prop.type === 'conjugation') {
+        if (prop.type === "conjugation") {
           // For conjugation properties, parse the JSON string value
           formattedProperties[prop.name] = {
             name: prop.name,
             value: JSON.parse(prop.value),
-            type: 'conjugation'
+            type: "conjugation",
           };
         } else {
           formattedProperties[prop.name] = {
             name: prop.name,
             value: prop.value,
-            type: prop.type as PropertyType
+            type: prop.type as PropertyType,
           };
         }
       }
-      
-      console.log('Formatted properties:', formattedProperties);
+
+      console.log("Formatted properties:", formattedProperties);
       setInitialProperties(formattedProperties);
       setError(null);
     } catch (error) {
-      console.error('Error loading word:', error);
-      setError('Failed to load word data');
+      console.error("Error loading word:", error);
+      setError("Failed to load word data");
     } finally {
       setIsLoading(false);
     }
@@ -105,17 +123,22 @@ export default function EditWordPage() {
     }
   }, [showSuccess]);
 
-  const handleSubmit = async (word: string, translation: string, example: string | undefined, properties: WordProperties) => {
+  const handleSubmit = async (
+    word: string,
+    translation: string,
+    example: string | undefined,
+    properties: WordProperties
+  ) => {
     if (!wordData?.type) {
-      throw new Error('Word type not found');
+      throw new Error("Word type not found");
     }
 
     setIsSubmitting(true);
     setError(null);
 
     try {
-      console.log('Submitting properties:', properties);
-      
+      console.log("Submitting properties:", properties);
+
       // First update the word itself
       await database.updateWord(
         uuid,
@@ -127,19 +150,22 @@ export default function EditWordPage() {
 
       // Get existing properties to compare
       const existingProperties = await database.getWordProperties(uuid);
-      console.log('Existing properties before update:', existingProperties);
-      const existingPropertyNames = new Set(existingProperties.map(p => p.name));
+      console.log("Existing properties before update:", existingProperties);
+      const existingPropertyNames = new Set(
+        existingProperties.map((p) => p.name)
+      );
 
       // Update or add properties
       for (const [name, property] of Object.entries(properties)) {
-        const value = typeof property.value === 'object' 
-          ? JSON.stringify(property.value)
-          : property.value as string;
+        const value =
+          typeof property.value === "object"
+            ? JSON.stringify(property.value)
+            : (property.value as string);
 
         console.log(`Processing property ${name}:`, {
           value,
           type: property.type,
-          exists: existingPropertyNames.has(name)
+          exists: existingPropertyNames.has(name),
         });
 
         if (existingPropertyNames.has(name)) {
@@ -163,12 +189,12 @@ export default function EditWordPage() {
 
       // Log final state
       const finalProperties = await database.getWordProperties(uuid);
-      console.log('Final properties after update:', finalProperties);
+      console.log("Final properties after update:", finalProperties);
 
       setShowSuccess(true);
     } catch (error) {
-      console.error('Error updating word:', error);
-      throw new Error('Failed to update word');
+      console.error("Error updating word:", error);
+      throw new Error("Failed to update word");
     } finally {
       setIsSubmitting(false);
     }
@@ -183,20 +209,16 @@ export default function EditWordPage() {
   if (showSuccess) {
     return (
       <View style={[styles.container, styles.successContainer]}>
-        <Animated.View style={[styles.checkmark, { transform: [{ scale: checkmarkScale }] }]}>
-          <IconButton
-            icon="check-circle"
-            size={64}
-            iconColor="#10B981"
-          />
+        <Animated.View
+          style={[styles.checkmark, { transform: [{ scale: checkmarkScale }] }]}
+        >
+          <IconButton icon="check-circle" size={64} iconColor="#10B981" />
         </Animated.View>
-        <Text variant="headlineSmall" style={styles.successText}>Word Updated!</Text>
+        <Text variant="headlineSmall" style={styles.successText}>
+          Word Updated!
+        </Text>
         <View style={styles.buttonContainer}>
-          <Button
-            mode="contained"
-            onPress={handleBack}
-            style={styles.button}
-          >
+          <Button mode="contained" onPress={handleBack} style={styles.button}>
             Back
           </Button>
         </View>
@@ -224,26 +246,31 @@ export default function EditWordPage() {
     return null;
   }
 
+  // Main Return
   return (
-    <WordForm
-      type={wordData.type}
-      config={config}
-      initialWord={wordData.word}
-      initialTranslation={wordData.translation}
-      initialExample={wordData.example}
-      initialProperties={initialProperties}
-      onSubmit={handleSubmit}
-      onCancel={handleBack}
-      submitButtonText="Update Word"
-    />
+    <SafeAreaWrapper backgroundColor={colors.background}>
+      <UnifiedHeader title={i18n.t("edit_word")} />
+      <WordForm
+        type={wordData.type as WordType}
+        config={config}
+        initialWord={wordData.word}
+        initialTranslation={wordData.translation}
+        initialExample={wordData.example}
+        initialProperties={initialProperties}
+        onSubmit={handleSubmit}
+        onCancel={handleBack}
+        submitButtonText={i18n.t("update_word")}
+      />
+      <UnifiedFooter />
+    </SafeAreaWrapper>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   successContainer: {
     padding: 20,
@@ -255,15 +282,15 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     padding: 16,
   },
   button: {
     minWidth: 200,
   },
   error: {
-    color: 'red',
+    color: "red",
     marginBottom: 16,
   },
-}); 
+});

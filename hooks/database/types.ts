@@ -44,6 +44,7 @@ export interface WordProperty {
     value: string;
     type: string;
     created_at: string;
+    updated_at: string;
 }
 
 export interface ExportedList {

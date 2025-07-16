@@ -35,8 +35,8 @@ import { useAppTheme } from "@/styles/ThemeContext";
 
 export default function LanguagePage() {
   const { state, setCurrentList, setCurrentLanguage } = useNavigationContext();
-  const { goToList } = useNavigationHelper();
   const database = useDatabase();
+  const { goToList } = useNavigationHelper();
   const { colors } = useAppTheme();
   const [newListName, setNewListName] = useState("");
   const [newListDescription, setNewListDescription] = useState("");
