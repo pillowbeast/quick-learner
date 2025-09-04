@@ -6,6 +6,7 @@ export default {
     loading: "Loading...",
     loading_languages: "Loading languages...",
     loading_lists: "Loading lists...",
+    loading_words: "Loading words...",
     loading_database: "Initializing database...",
     no_words: "No words available in this list",
     tap_to_reveal: "Tap to reveal",
