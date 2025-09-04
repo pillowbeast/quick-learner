@@ -23,7 +23,7 @@ Quick Learner is a modern, intuitive language learning application built with Re
 ## Getting Started
 
 Maybe you want 'Node Version Manager'(nvm) get it from the official GitHub page. \
-Then run `nvm install` from project root to install used version. 
+Then run `nvm install` from project root to install used version and `nvm use` to enable the version. 
 
 1. Install dependencies
    ```bash
