@@ -8,9 +8,7 @@ import {
 } from "react-native";
 import {
   Text,
-  Surface,
   ActivityIndicator,
-  TextInput,
 } from "react-native-paper";
 import React from "react";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -27,6 +25,7 @@ import UnifiedSeperator from "@/components/UnifiedSeperator";
 import UnifiedAddButton from "@/components/UnifiedAddButton";
 import UnifiedButton from "@/components/UnifiedButton";
 import UnifiedDialog from "@/components/UnifiedDialog";
+import UnifiedTextInput from "@/components/UnifiedTextInput";
 
 import i18n from "@/i18n";
 import { entryStyles } from "@/styles/entryStyles";
@@ -193,32 +192,38 @@ export default function LanguagePage() {
         actions={
           <>
             <UnifiedButton
-              textStyle={{ color: colors.accent }}
               onPress={() => setDialogVisible(false)}
+              style={{ 
+                flex: 1,
+                backgroundColor: colors.error,
+              }}
+              textStyle={{ color: colors.onError }}
             >
               {i18n.t("cancel")}
             </UnifiedButton>
             <UnifiedButton
-              textStyle={{ color: colors.accent }}
               onPress={handleDialogSubmit}
+              style={{ 
+                flex: 1,
+                backgroundColor: colors.primary,
+              }}
+              textStyle={{ color: colors.onPrimaryOrSecondary }}
             >
               {i18n.t("add")}
             </UnifiedButton>
           </>
         }
       >
-        <TextInput
+        <UnifiedTextInput
           label={i18n.t("enter_list_name")}
           value={newListName}
           onChangeText={setNewListName}
-          textColor={colors.accent}
           autoFocus
         />
-        <TextInput
+        <UnifiedTextInput
           label={i18n.t("enter_list_description")}
           value={newListDescription}
           onChangeText={setNewListDescription}
-          textColor={colors.accent}
         />
       </UnifiedDialog>
       <UnifiedDialog
@@ -228,14 +233,22 @@ export default function LanguagePage() {
         actions={
           <>
             <UnifiedButton
-              textStyle={{ color: colors.accent }}
               onPress={() => setDeleteConfirmationVisible(false)}
+              style={{ 
+                flex: 1,
+                backgroundColor: colors.primary,
+              }}
+              textStyle={{ color: colors.onPrimaryOrSecondary }}
             >
               {i18n.t("cancel")}
             </UnifiedButton>
             <UnifiedButton
-              textStyle={{ color: colors.accent }}
               onPress={handleConfirmDelete}
+              style={{ 
+                flex: 1,
+                backgroundColor: colors.error,
+              }}
+              textStyle={{ color: colors.onError }}
             >
               {i18n.t("delete")}
             </UnifiedButton>
@@ -252,8 +265,12 @@ export default function LanguagePage() {
         title={error?.title || ""}
         actions={
           <UnifiedButton
-            textStyle={{ color: colors.accent }}
-            onPress={() => setError(null)}
+          onPress={() => setError(null)}
+          style={{ 
+            flex: 1,
+            backgroundColor: colors.primary,
+          }}
+            textStyle={{ color: colors.onPrimaryOrSecondary }}
           >
             {i18n.t("ok")}
           </UnifiedButton>

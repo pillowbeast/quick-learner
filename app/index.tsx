@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 const ONBOARDING_KEY = '@quick_learner_onboarding_complete';
 

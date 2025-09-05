@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-import UnifiedButton from '@/components/UnifiedButton';
-import { useNavigationHelper } from '@/hooks/useNavigation';
+import { useAppTheme } from '@/styles/ThemeContext';
+import i18n from '@/i18n';
+
 import SafeAreaWrapper from '@/components/SafeAreaWrapper';
 import UnifiedHeader from '@/components/UnifiedHeader';
-import i18n from '@/i18n';
-import { useAppTheme } from '@/styles/ThemeContext';
+import UnifiedButton from '@/components/UnifiedButton';
+import UnifiedTextInput from '@/components/UnifiedTextInput';
 
 const API_KEY_STORAGE_KEY = 'openai_api_key';
 
@@ -15,7 +16,6 @@ export default function SettingsScreen() {
   const { colors } = useAppTheme();
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const { goBack } = useNavigationHelper();
 
   useEffect(() => {
     loadApiKey();
@@ -120,14 +120,15 @@ export default function SettingsScreen() {
           <Text style={styles.description}>
             {i18n.t('openai_api_key_explanation')}
           </Text>
-          <TextInput
-            style={styles.input}
+          <UnifiedTextInput
             value={apiKey}
             onChangeText={setApiKey}
             placeholder="Enter your OpenAI API key"
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
+            label="OpenAI API Key"
+            helperText="Your API key will be securely stored on your device"
           />
           
           <View style={styles.buttonContainer}>
@@ -179,14 +180,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
   },
   buttonContainer: {
     flexDirection: 'row',

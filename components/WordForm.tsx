@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
-import { Text, TextInput, Button, Chip, List } from 'react-native-paper';
+import { Text, Chip, List } from 'react-native-paper';
 
-import { useNavigationContext } from '@/hooks/useNavigationContext';
+import { useAppTheme } from '@/styles/ThemeContext';
 
 import UnifiedTextInput from '@/components/UnifiedTextInput';
+import UnifiedButton from '@/components/UnifiedButton';
 
 import { languageConfigs } from '@/types/languages';
 import { WordType, WordProperties, PropertyType } from '@/types/word';
 
-import { useAppTheme } from '@/styles/ThemeContext';
 import i18n from '@/i18n';
+import { spacing } from '@/styles/tokens';
 
 interface WordFormProps {
   type: WordType;
@@ -35,9 +36,8 @@ export default function WordForm({
   onCancel,
   submitButtonText
 }: WordFormProps) {
-  const { state } = useNavigationContext();
   const { colors } = useAppTheme();
-
+  
   const [word, setWord] = useState(initialWord);
   const [translation, setTranslation] = useState(initialTranslation);
   const [example, setExample] = useState(initialExample);
@@ -113,7 +113,7 @@ export default function WordForm({
     
     if (property.type === 'text') {
       return (
-        <TextInput
+        <UnifiedTextInput
           key={property.name}
           label={i18n.t(property.name)}
           value={currentValue as string}
@@ -156,7 +156,7 @@ export default function WordForm({
             titleStyle={styles.accordionTitle}
           >
             {Object.entries(property.persons).map(([person, label]) => (
-              <TextInput
+              <UnifiedTextInput
                 key={person}
                 label={label}
                 value={conjugationValue[person] || ''}
@@ -195,7 +195,7 @@ export default function WordForm({
                 onChangeText={setWord}
                 style={styles.input}
               />
-              <TextInput
+              <UnifiedTextInput
                 label={i18n.t('translation')}
                 value={translation}
                 onChangeText={setTranslation}
@@ -207,13 +207,7 @@ export default function WordForm({
               )}
             </View>
 
-            <View style={{ height: 16 }} />
-            <View style={{ height: 3, backgroundColor: 'grey' }} />
-            <View style={{ height: 24 }} />
-
-            <Text variant="titleMedium" style={{ marginBottom: 8 }}> {i18n.t('optional')}</Text>
-            
-            <TextInput
+            <UnifiedTextInput
               label={`${i18n.t('example')}`}
               value={example}
               onChangeText={setExample}
@@ -236,23 +230,26 @@ export default function WordForm({
 
       <View style={[styles.buttonContainer, onCancel ? styles.buttonContainerWithCancel : null]}>
         {onCancel && (
-          <Button
-            mode="outlined"
+          <UnifiedButton
             onPress={onCancel}
-            style={[styles.button, styles.cancelButton]}
+            style={{
+              flex: 1,
+              backgroundColor: colors.error,
+            }}
           >
             {i18n.t('cancel')}
-          </Button>
+          </UnifiedButton>
         )}
-        <Button
-          mode="contained"
+        <UnifiedButton
           onPress={handleSubmit}
-          loading={isSubmitting}
           disabled={isSubmitting}
-          style={styles.button}
+          style={{
+            flex: 1,
+            backgroundColor: colors.primary,
+          }}
         >
           {submitButtonText || i18n.t('submit')}
-        </Button>
+        </UnifiedButton>
       </View>
     </KeyboardAvoidingView>
   );
@@ -302,11 +299,8 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    padding: 16,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   buttonContainerWithCancel: {
     justifyContent: 'space-between',

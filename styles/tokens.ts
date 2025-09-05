@@ -19,6 +19,7 @@ export const lightColors = {
     success: '#178f41',
     error: '#e62929',
     warning: '#FFB300',
+    onError: '#FFFFFF',
 };
 
 export const darkColors = {
@@ -38,6 +39,7 @@ export const darkColors = {
     success: '#59DEB3',
     error: '#FF6F6A',
     warning: '#FFC94D',
+    onError: '#FFFFFF',
 };
 
 export const spacing = {

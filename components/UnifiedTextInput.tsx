@@ -19,6 +19,15 @@ interface UnifiedTextInputProps extends Omit<TextInputProps, 'style'> {
   disabled?: boolean;
   multiline?: boolean;
   numberOfLines?: number;
+  // Additional commonly used TextInput props
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoCorrect?: boolean;
+  autoFocus?: boolean;
+  autoComplete?: 'off' | 'username' | 'password' | 'email' | 'name' | 'tel' | 'street-address' | 'postal-code' | 'cc-number' | 'cc-csc' | 'cc-exp' | 'cc-exp-month' | 'cc-exp-year';
+  secureTextEntry?: boolean;
+  keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad' | 'number-pad' | 'decimal-pad';
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
+  textContentType?: 'none' | 'URL' | 'addressCity' | 'addressCityAndState' | 'addressState' | 'countryName' | 'creditCardNumber' | 'emailAddress' | 'familyName' | 'fullStreetAddress' | 'givenName' | 'jobTitle' | 'location' | 'middleName' | 'name' | 'namePrefix' | 'nameSuffix' | 'nickname' | 'organizationName' | 'postalCode' | 'streetAddressLine1' | 'streetAddressLine2' | 'sublocality' | 'telephoneNumber' | 'username' | 'password' | 'newPassword' | 'oneTimeCode';
 }
 
 export default function UnifiedTextInput({
@@ -32,6 +41,14 @@ export default function UnifiedTextInput({
   disabled = false,
   multiline = false,
   numberOfLines = 1,
+  autoCapitalize,
+  autoCorrect,
+  autoFocus,
+  autoComplete,
+  secureTextEntry,
+  keyboardType,
+  returnKeyType,
+  textContentType,
   ...textInputProps
 }: UnifiedTextInputProps) {
   const { colors } = useAppTheme();
@@ -44,14 +61,16 @@ export default function UnifiedTextInput({
   // State of the input
   const handleFocus = () => {
     setIsFocused(true);
-    growText(textinputScale, typography.body.fontSize);
-    shrinkText(labelScale, typography.mini.fontSize);
+    sizeAnimation(textinputScale, typography.subheader.fontSize);
+    sizeAnimation(labelScale, typography.mini.fontSize);
+    sizeAnimation(labelSpacing, spacing.xs);
   };
   const handleBlur = () => {
     setIsFocused(false);
-    shrinkText(textinputScale, typography.caption.fontSize);
+    sizeAnimation(textinputScale, typography.body.fontSize);
     if (!hasValue) {
-      growText(labelScale, typography.caption.fontSize);
+      sizeAnimation(labelScale, typography.body.fontSize);
+      sizeAnimation(labelSpacing, spacing.md);
     }
   };
 
@@ -69,18 +88,17 @@ export default function UnifiedTextInput({
       : colors.muted;
   
   // Animation of growing/shrinking text
+  // Label Animation - initialize based on hasValue
+  const [labelScale] = useState(new Animated.Value(
+    hasValue ? typography.mini.fontSize : typography.caption.fontSize
+  ));
+  const [labelSpacing] = useState(new Animated.Value(
+    hasValue ? spacing.xs : spacing.md
+  ));
   const [textinputScale] = useState(new Animated.Value(typography.body.fontSize));
-  const [labelScale] = useState(new Animated.Value(typography.caption.fontSize));
-  const growText = (textScale: Animated.Value, bigSize: number) => {
-    Animated.timing(textScale, {
-      toValue: bigSize,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  };
-  const shrinkText = (textScale: Animated.Value, smallSize: number) => {
-    Animated.timing(textScale, {
-      toValue: smallSize,
+  const sizeAnimation = (oldSize: Animated.Value, newSize: number) => {
+    Animated.timing(oldSize, {
+      toValue: newSize,
       duration: 200,
       useNativeDriver: false,
     }).start();
@@ -97,7 +115,7 @@ export default function UnifiedTextInput({
             {
               color: labelColor,
               fontSize: labelScale,
-              top: isLabelFloating ? spacing.sm : spacing.md,
+              top: labelSpacing,
             },
             labelStyle,
           ]}
@@ -112,11 +130,19 @@ export default function UnifiedTextInput({
         ref={inputRef}
         value={value}
         onChangeText={onChangeText}
+        autoFocus={autoFocus}
         onFocus={handleFocus}
         onBlur={handleBlur}
         editable={!disabled}
         multiline={multiline}
         numberOfLines={numberOfLines}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        autoComplete={autoComplete}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        returnKeyType={returnKeyType}
+        textContentType={textContentType}
         cursorColor={colors.accent}
         selectionColor={colors.accent}
         style={[
@@ -126,7 +152,7 @@ export default function UnifiedTextInput({
             backgroundColor: disabled ? colors.background : colors.elevated,
             color: colors.text,
             paddingTop: label && isLabelFloating ? spacing.lg : spacing.md,
-            minHeight: multiline ? 80 : 48,
+            minHeight: 48,
             fontSize: textinputScale,
           },
           inputStyle,
@@ -173,7 +199,6 @@ const styles = StyleSheet.create({
   },
   helperText: {
     marginTop: spacing.xs,
-    marginLeft: spacing.sm,
-    fontSize: typography.caption.fontSize,
+    fontSize: typography.mini.fontSize,
   },
 });

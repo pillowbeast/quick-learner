@@ -5,6 +5,7 @@ import { Stack } from "expo-router";
 import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
+import { View, StyleSheet } from 'react-native';
 
 import { NavigationProvider } from '@/hooks/useNavigationContext';
 import { DatabaseProvider } from '@/hooks/useDatabase';
@@ -12,18 +13,18 @@ import { ThemeProvider, useAppTheme } from "@/styles/ThemeContext";
 
 // AppContent is split from RootLayout so that the Statusbar rerenders upon theme changes
 function AppContent() {
-  const { theme } = useAppTheme();
+  const { theme, colors } = useAppTheme();
 
   const [fontsLoaded] = useFonts({
     'SpaceMono-Regular': require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   if (!fontsLoaded) {
-    return null;
+    return <View style={[styles.container, { backgroundColor: colors.background }]} />;
   }
 
   return (
-    <>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <PaperProvider>
         <SafeAreaProvider>
@@ -43,7 +44,7 @@ function AppContent() {
           </NavigationProvider>
         </SafeAreaProvider>
       </PaperProvider>
-    </>
+    </View>
   );
 }
 
@@ -52,7 +53,7 @@ export default function RootLayout() {
   // It no longer directly consumes the theme for its immediate children.
   // AppContent re-renders when theme changes, so the StatusBar re-renders too.
   return (
-    <GestureHandlerRootView>
+    <GestureHandlerRootView style={styles.gestureHandler}>
       <DatabaseProvider>
         <ThemeProvider>
           <AppContent />
@@ -61,3 +62,12 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  gestureHandler: {
+    flex: 1,
+  },
+});
