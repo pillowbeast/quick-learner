@@ -57,6 +57,7 @@ export const typography = {
     small_body: { fontSize: 15, fontWeight: '600' as const },
     italic: { fontSize: 14, fontWeight: '400' as const, fontStyle: 'italic' as const },
     caption: { fontSize: 16, fontWeight: '200' as const },
+    mini: { fontSize: 12, fontWeight: '200' as const },
 };
 
 export const radii = {

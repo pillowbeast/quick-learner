@@ -31,12 +31,12 @@ export default function EditWordPage() {
   const { goBack } = useNavigationHelper();
   const { colors } = useAppTheme();
 
+  const [wordData, setWordData] = useState<Word | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [checkmarkScale] = useState(new Animated.Value(0));
-  const [wordData, setWordData] = useState<Word | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [initialProperties, setInitialProperties] = useState<WordProperties>(
     {}
   );
@@ -206,6 +206,7 @@ export default function EditWordPage() {
     }, 100);
   };
 
+  // Successful Editing Screen
   if (showSuccess) {
     return (
       <View style={[styles.container, styles.successContainer]}>
@@ -226,6 +227,7 @@ export default function EditWordPage() {
     );
   }
 
+  // Loading Screen
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -234,6 +236,7 @@ export default function EditWordPage() {
     );
   }
 
+  // Error Screen
   if (error) {
     return (
       <View style={styles.container}>

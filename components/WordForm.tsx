@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, KeyboardEvent } from 'react-native';
-import { Text, TextInput, Button, Surface, Chip, List } from 'react-native-paper';
-import { WordType, WordProperties, PropertyType } from '@/types/word';
-import { languageConfigs } from '@/types/languages';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, TextInput, Button, Chip, List } from 'react-native-paper';
+
 import { useNavigationContext } from '@/hooks/useNavigationContext';
+
+import UnifiedTextInput from '@/components/UnifiedTextInput';
+
+import { languageConfigs } from '@/types/languages';
+import { WordType, WordProperties, PropertyType } from '@/types/word';
+
+import { useAppTheme } from '@/styles/ThemeContext';
 import i18n from '@/i18n';
 
 interface WordFormProps {
@@ -30,6 +36,7 @@ export default function WordForm({
   submitButtonText
 }: WordFormProps) {
   const { state } = useNavigationContext();
+  const { colors } = useAppTheme();
 
   const [word, setWord] = useState(initialWord);
   const [translation, setTranslation] = useState(initialTranslation);
@@ -167,6 +174,7 @@ export default function WordForm({
     return null;
   };
 
+  // Main Return
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -176,18 +184,12 @@ export default function WordForm({
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContainer, { paddingBottom: 100 }]}
+          contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
         >
-          <Surface style={styles.header} elevation={1}>
-            <Text variant="headlineSmall" style={styles.title}>
-              {initialWord ? i18n.t('edit_word') : i18n.t('add_word')}
-            </Text>
-          </Surface>
-
           <View style={styles.content}>
             <View>
-              <TextInput
+              <UnifiedTextInput
                 label={i18n.t('word')}
                 value={word}
                 onChangeText={setWord}
