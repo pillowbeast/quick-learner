@@ -145,6 +145,8 @@ export default function UnifiedTextInput({
         textContentType={textContentType}
         cursorColor={colors.accent}
         selectionColor={colors.accent}
+        scrollEnabled={false}
+        rejectResponderTermination={false}
         style={[
           styles.input,
           {

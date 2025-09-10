@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { Text, Chip, List } from 'react-native-paper';
 
 import { useAppTheme } from '@/styles/ThemeContext';
@@ -42,9 +43,10 @@ export default function WordForm({
   const [translation, setTranslation] = useState(initialTranslation);
   const [example, setExample] = useState(initialExample);
   const [properties, setProperties] = useState<WordProperties>(initialProperties);
+  const [expandedConjugations, setExpandedConjugations] = useState<string[]>([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedConjugations, setExpandedConjugations] = useState<string[]>([]);
 
   const handlePropertyChange = (name: string, value: string | Record<string, string>, type: PropertyType) => {
     setProperties(prev => ({
@@ -152,8 +154,8 @@ export default function WordForm({
             title={property.name}
             expanded={isExpanded}
             onPress={() => handleConjugationExpand(property.name)}
-            style={styles.accordion}
-            titleStyle={styles.accordionTitle}
+            style={[styles.accordion, { backgroundColor: colors.background }]}
+            titleStyle={[styles.accordionTitle, { backgroundColor: colors.background, color: colors.text }]}
           >
             {Object.entries(property.persons).map(([person, label]) => (
               <UnifiedTextInput
@@ -327,6 +329,5 @@ const styles = StyleSheet.create({
   accordionInput: {
     fontSize: 14,
     marginBottom: 4,
-    height: 40,
   },
 }); 
